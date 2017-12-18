@@ -1,6 +1,9 @@
 # config
 This is a collection of my vim, tmux, and other configs.
 
+# thanks
+[A reference code](https://github.com/dsdstudio/dotfiles)
+
 # setting
 ```bash
 #bash
