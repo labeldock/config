@@ -3,6 +3,7 @@
     s = !git branch -a && git status
     ss = git status && !git branch -r
     ch = checkout
+    rch = !git checkout -t origin/$1 && false &&
     aa = add --all
     ai = add -p
     cm = commit -mgit
