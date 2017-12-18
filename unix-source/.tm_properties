@@ -1,0 +1,6 @@
+softWrap = true
+tabSize = 4
+softTabs = true
+
+excludeInFileChooser = "{$excludeInFileChooser,node_modules,log,vendor,tmp,META-INF,.svn}"
+excludeInFolderSearch = "{$excludeInFolderSearch,$extraExcludes,node_modules,d:}"
