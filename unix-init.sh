@@ -22,7 +22,7 @@ done
 # command
 function config {
 
-echo -e "ENTER COMMAND\n[0!] remove your all config \n[1] git user"
+echo -e "ENTER COMMAND\n[0!] remove your all config\n[0] reload your all config \n[1] git user"
 read selected
 
 case "$selected" in
@@ -33,6 +33,9 @@ case "$selected" in
             echo "rm $FILE_ITEM"
         done
         configbootstrap
+    ;;
+    "0")
+        source "$HOME/config/unix-init.sh"
     ;;
     "1")
         echo "user email"
@@ -46,3 +49,7 @@ case "$selected" in
 esac
 
 }
+
+# alias
+alias mfzf='mate $(fzf)'
+alias vfzf='vim $(fzf)'
