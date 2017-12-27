@@ -13,7 +13,7 @@
     aa = add --all
     ai = add --interactive
     ap = add --patch
-    app = reset --patch
+    np = reset --patch
     cm = commit -m
     un = diff
     in = diff --cached
