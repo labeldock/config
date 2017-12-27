@@ -1,4 +1,4 @@
-echo "ACTIVATE CUSTOM UNIX CONFIG ($HOME/config/unix-source/)"
+echo "ACTIVATE CUSTOM CONFIG ($HOME/config/unix-source/)"
 
 # setting
 LINK_TARGET_FILES=".gitconfig .vimrc .tmux.conf .tm_properties"
@@ -22,7 +22,7 @@ done
 # command
 function config {
 
-echo -e "ENTER COMMAND\n[0!] setup or resetup\n[0] reload your all config \n[1] git user"
+echo -e "Your pwd => $PWD\nENTER COMMAND\n0!) setup or resetup\n0) reload your all config \n1) git user \n7) local tm_properties"
 read selected
 
 case "$selected" in
@@ -30,6 +30,7 @@ case "$selected" in
         if [ -h $HOME/config/unix-source ]
         then
             rm -rf $HOME/config/unix-source
+            echo
         fi
         
         cp -rf '$HOME/config/unix-source.default' '$HOME/config/unix-source'
@@ -53,6 +54,27 @@ case "$selected" in
 
         git config user.name "$name"
         git config user.email "$email"
+    ;;
+    "9")
+        if [ ! -h $PWD/.tm_properties ]
+        then
+            touch .tm_properties
+        fi
+        
+        read -p "usesofttab?[true/false]" softtab
+        read -p "tabsize?(2/4/...)" tabsize
+        
+        if [ $softtab ]
+        then
+            echo "softWrap=$softtab" >> "$PWD/.tm_properties"
+            echo "softTabs=$softtab" >> "$PWD/.tm_properties"
+        fi
+        
+        if [ $tabsize ]
+        then
+            echo "tabSize=$tabsize" >> "$PWD/.tm_properties"
+        fi
+        
     ;;
 esac
 
