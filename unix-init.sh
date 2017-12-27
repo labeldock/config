@@ -27,13 +27,15 @@ read selected
 
 case "$selected" in
     "0!")
-        if [ -h $HOME/config/unix-source ]
+        if [ -d $HOME/config/unix-source ]
         then
-            rm -rf $HOME/config/unix-source
-            echo
+            rm -rf "$HOME/config/unix-source"
+            echo "removed $HOME/config/unix-source"
         fi
         
-        cp -rf '$HOME/config/unix-source.default' '$HOME/config/unix-source'
+        
+        cp -rf "$HOME/config/unix-source.default" "$HOME/config/unix-source"
+        echo "copyed $HOME/config/unix-source.default to $HOME/config/unix-source"
         
         for FILE_ITEM in $LINK_TARGET_FILES
         do
