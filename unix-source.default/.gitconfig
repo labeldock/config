@@ -1,9 +1,12 @@
 [alias]
     long = status -sb
-    s = !git branch -a && git status
+    ma = checkout master
+    s  = !git branch -a && git status
     ss = git status && !git branch -r
     ch = checkout
-    rch = !git checkout -t origin/$1 && false &&
+    rch = !git checkout -tcorigin/$1 && false &&
+    bs = checkout -b
+    be = !GITBEBRANCH=$(git symbolic-ref --short -q HEAD) && [ $GITBEBRANCH == "master" ] && echo "Can not do it in the master brunch." || git checkout master && git merge --no-ff $GITBEBRANCH && git checkout $GITBEBRANCH
     aa = add --all
     ai = add -p
     ri = reset -p
