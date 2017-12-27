@@ -3,6 +3,11 @@ echo "ACTIVATE CUSTOM UNIX CONFIG ($HOME/config/unix-source/)"
 # setting
 LINK_TARGET_FILES=".gitconfig .vimrc .tmux.conf .tm_properties"
 
+
+function resetsource {
+    ;;
+}
+
 function configbootstrap {
 
 # 미리 정의해놓은 설정파일들 링크 처리
@@ -22,16 +27,23 @@ done
 # command
 function config {
 
-echo -e "ENTER COMMAND\n[0!] remove your all config\n[0] reload your all config \n[1] git user"
+echo -e "ENTER COMMAND\n[0!] setup or resetup\n[0] reload your all config \n[1] git user"
 read selected
 
 case "$selected" in
     "0!")
+        if [ ! -h $HOME/config/unix-source ]
+            rm -rf $HOME/config/unix-source/
+        fi
+        
+        cp $HOME/config/unix-source.default/ $HOME/config/unix-source/
+        
         for FILE_ITEM in $LINK_TARGET_FILES
         do
             rm $HOME/$FILE_ITEM
             echo "rm $FILE_ITEM"
         done
+        
         configbootstrap
     ;;
     "0")

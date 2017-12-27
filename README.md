@@ -19,4 +19,9 @@ vim ~/.bash_profile
 [[ -s "$HOME/config/unix-init.sh" ]] && source "$HOME/config/unix-init.sh"
 
 #:wq
+
+# reopen terminal
+
+config
+0!
 ```
