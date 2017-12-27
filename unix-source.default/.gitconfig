@@ -6,6 +6,7 @@
     rch = !git checkout -t origin/$1 && false &&
     aa = add --all
     ai = add -p
+    ri = reset -p
     cm = commit -m
     un = diff
     in = diff --cached
