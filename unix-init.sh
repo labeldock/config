@@ -27,6 +27,8 @@ read selected
 
 case "$selected" in
     "0!")
+        local UTIME=$(date +%s)
+
         if [ -d $HOME/config/unix-source ]
         then
             cp -rf "$HOME/config/unix-source" "$HOME/config/unix-source.removed.$UTIME"
