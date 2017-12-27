@@ -1,6 +1,7 @@
 softWrap = true
-tabSize = 4
 softTabs = true
+tabSize = 4
 
+include = "{$include,.vim,.vimrc,.tmux.conf,.tm_properties,.gitconfig,.gitignore}"
 excludeInFileChooser = "{$excludeInFileChooser,node_modules,log,vendor,tmp,META-INF,.svn}"
 excludeInFolderSearch = "{$excludeInFolderSearch,$extraExcludes,node_modules,d:}"

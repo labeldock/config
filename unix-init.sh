@@ -3,11 +3,6 @@ echo "ACTIVATE CUSTOM UNIX CONFIG ($HOME/config/unix-source/)"
 # setting
 LINK_TARGET_FILES=".gitconfig .vimrc .tmux.conf .tm_properties"
 
-
-function resetsource {
-    ;;
-}
-
 function configbootstrap {
 
 # 미리 정의해놓은 설정파일들 링크 처리
@@ -32,11 +27,12 @@ read selected
 
 case "$selected" in
     "0!")
-        if [ ! -h $HOME/config/unix-source ]
-            rm -rf $HOME/config/unix-source/
+        if [ -h $HOME/config/unix-source ]
+        then
+            rm -rf $HOME/config/unix-source
         fi
         
-        cp $HOME/config/unix-source.default/ $HOME/config/unix-source/
+        cp -rf '$HOME/config/unix-source.default' '$HOME/config/unix-source'
         
         for FILE_ITEM in $LINK_TARGET_FILES
         do
