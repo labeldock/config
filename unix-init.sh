@@ -22,7 +22,7 @@ done
 # command
 function config {
 
-echo -e "Your pwd => $PWD\nENTER COMMAND\n0!) setup or resetup\n0) reload your all config \n1) git user \n7) local tm_properties"
+echo -e "Your pwd => $PWD\nENTER COMMAND\n0!) setup or resetup\n0) reload your all config \n1) git user \n9) local tm_properties"
 read selected
 
 case "$selected" in
