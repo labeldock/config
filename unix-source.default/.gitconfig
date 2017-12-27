@@ -1,6 +1,6 @@
 [alias]
     long = status -sb
-    ma = checkout master
+    h  = checkout master
     s  = !git branch -a && git status
     ss = git status && !git branch -r
     ch = checkout
