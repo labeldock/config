@@ -4,14 +4,14 @@
     s  = !git branch -a && git status
     ss = git status && !git branch -r
     ch = checkout
-    rch = !git checkout -tcorigin/$1 && false &&
+    rch = !git checkout -tc origin/$1 && false &&
     rp = !git push origin $(git symbolic-ref --short -q HEAD)
     rd = !git push origin :$(git symbolic-ref --short -q HEAD)
     rpp = !git push --set-upstream origin $(git symbolic-ref --short -q HEAD)
     bs = checkout -b
     be = !GITBEBRANCH=$(git symbolic-ref --short -q HEAD) && [ $GITBEBRANCH == "master" ] && echo "Can not do it in the master brunch." || git checkout master && git merge --no-ff $GITBEBRANCH && git checkout $GITBEBRANCH
     aa = add --all
-    ai = add --intractive
+    ai = add --interactive
     ap = add --patch
     app = reset --patch
     cm = commit -m
