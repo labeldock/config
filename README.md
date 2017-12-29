@@ -26,7 +26,7 @@ config
 0!
 ```
 
-#GIT alias
+# GIT alias
 ## basic command
 * ago : The degree of change of remote and current brunch
 * ma : Go to Master Brunch
