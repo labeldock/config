@@ -1,6 +1,7 @@
 [alias]
-    long = status -sb
-    h  = checkout master
+    ago = status -sb
+    ma  = ![ $(git symbolic-ref --short -q HEAD) == "master" ] && echo "Can not run on master brunch." || (GITFEBRANCH=$(git symbolic-ref --short -q HEAD) && echo "leave from $GITFEBRANCH brunch" && git checkout master)
+    pick= cherry-pick
     s  = !git branch -a && git status
     ss = git status && !git branch -r
     ch = checkout
@@ -21,9 +22,15 @@
     in = diff --cached
     undo = reset HEAD^
     i = !git config --list | grep
+    ag = log --graph --all --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso
     g  = log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso
+    agr= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --grep=$1 && false &&
     gr = !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --grep=$1 && false &&
+    aga= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --grep=$1 && false &&
     ga = !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --author=$1 && false &&
+    agg= log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=*
     gg = log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=*
+    agga= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --author=$1 && false &&
     gga= !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --author=$1 && false &&
+    aggr= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --grep=$1 && false &&
     ggr= !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --grep=$1 && false &&
