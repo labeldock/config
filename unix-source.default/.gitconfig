@@ -4,7 +4,7 @@
     pick= cherry-pick
     s  = !git branch -a && git status
     ch = checkout
-    rch = !git checkout -tc origin/$1 && false &&
+    rch = !git checkout -t origin/$1 && false &&
     rp = !git push origin $(git symbolic-ref --short -q HEAD)
     rpp = !git push --set-upstream origin $(git symbolic-ref --short -q HEAD)
     rd = !git push origin :$(git symbolic-ref --short -q HEAD)
