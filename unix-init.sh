@@ -1,3 +1,6 @@
+# paste to ~/.bash_profile
+# [[ -s "$HOME/config/unix-init.sh" ]] && source "$HOME/config/unix-init.sh"
+
 echo "ACTIVATE CUSTOM CONFIG ($HOME/config/unix-source/)"
 
 # setting
@@ -22,11 +25,11 @@ done
 # command
 function config {
 
-echo -e "Your pwd => $PWD\nENTER COMMAND\n0!) setup or resetup\n0) reload your all config \n1) git user \n9) local tm_properties"
+echo -e "Your pwd => $PWD\nENTER COMMAND\ninitialize!) setup or resetup\n0) reload your all config \n1) git user \n9) local tm_properties \nnvm) nvm-setup \nrvm) rvm-setup"
 read selected
 
 case "$selected" in
-    "0!")
+    "initialize!")
         local UTIME=$(date +%s)
 
         if [ -d $HOME/config/unix-source ]
@@ -78,7 +81,12 @@ case "$selected" in
         then
             echo "tabSize=$tabsize" >> "$PWD/.tm_properties"
         fi
-        
+    ;;
+    "nvm")
+        curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
+    ;;
+    "rvm")
+        curl -sSL https://get.rvm.io | bash -s stable
     ;;
 esac
 
