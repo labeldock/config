@@ -4,7 +4,7 @@
 echo "ACTIVATE CUSTOM CONFIG ($HOME/config/unix-source/)"
 
 # setting
-LINK_TARGET_FILES=".gitconfig .vimrc .tmux.conf .tm_properties"
+LINK_TARGET_FILES=".gitconfig .vim .vimrc .tmux.conf .tm_properties"
 
 function configbootstrap {
 
@@ -81,6 +81,9 @@ case "$selected" in
         then
             echo "tabSize=$tabsize" >> "$PWD/.tm_properties"
         fi
+    ;;
+    "vundle")
+        vim +PluginInstall +qall
     ;;
     "nvm")
         curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
