@@ -25,7 +25,7 @@ done
 # command
 function config {
 
-echo -e "Your pwd => $PWD\nENTER COMMAND\ninitialize!) setup or resetup\n0) reload your all config \n1) git user \n9) local tm_properties \nnvm) nvm-setup \nrvm) rvm-setup"
+    echo -e "Your pwd => $PWD\nENTER COMMAND\ninitialize!) setup or resetup\n0) reload your all config \n1) git user \n9) local tm_properties \nvundle) install vim bundle from .vimrc \nnvm) nvm-setup \nrvm) rvm-setup"
 read selected
 
 case "$selected" in
