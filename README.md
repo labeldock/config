@@ -23,7 +23,7 @@ vim ~/.bash_profile
 # reopen terminal
 
 config
-0!
+i!
 ```
 
 # GIT alias
