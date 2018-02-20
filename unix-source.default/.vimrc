@@ -10,8 +10,9 @@ endif
 
 " 보이지 않는 글씨 보이기
 " :set list, :set nolist
-set listchars=eol:¬,tab:>·,trail:~,extends:>,precedes:<,space:␣
 
+" Sometimes an error occurs. Why?
+" set listchars=eol:¬,tab:→,trail:~,extends:»,precedes:«,space:␣
 
 " 자동 들여쓰기
 set autoindent
