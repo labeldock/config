@@ -46,6 +46,8 @@ i!
 * ap : git add --patch
 * np : git reset --patch
 * cm : git commit -m
+* cadd  : amend commit
+* cuser : amend commit current user info
 * un : View the unindexed diff.
 * in : View the indexed diff.
 * undo : Cancel the current commit.

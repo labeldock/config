@@ -16,7 +16,9 @@
     ai = add --interactive
     ap = add --patch
     np = reset --patch
-    cm = commit -m
+    cm    = commit -m
+    cadd  = commit --amend -m
+    cuser = commit --amend --reset-author
     un = diff
     in = diff --cached
     undo = reset HEAD^
