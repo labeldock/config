@@ -26,7 +26,7 @@ function vundleinstall {
 # command
 function config {
 
-    echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup\nr!) reload your all config \ngu) git user \ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nnvm) nvm-setup \nrvm) rvm-setup"
+    echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup\nr!) reload your all config \ngu) git user \ngc) git credential timeout\ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nnvm) nvm-setup \nrvm) rvm-setup"
 read selected
 
 case "$selected" in
@@ -60,13 +60,29 @@ case "$selected" in
         source "$HOME/config/unix-init.sh"
     ;;
     "gu")
-        echo "user email"
-        read email
         echo "user name"
         read name
-
+        echo "user email"
+        read email
+        
         git config user.name "$name"
         git config user.email "$email"
+        
+        git config --list | grep "user."
+    ;;
+    "gc")
+        echo "credential.helper cache timeout ? [y=forever,n|0==cancle,number=millisecond]"
+        read ctimeout
+        
+        if [[ $ctimeout == "Y" || $ctimeout == "y" ]]; then
+            git config credential.helper cache
+        elif [[ $ctimeout == "M" || $ctimeout == "n" || $ctimeout == "0" ]]; then
+            git config credential.helper "cache --timeout=0"
+        else
+            git config credential.helper "cache --timeout=$ctimeout"
+        fi
+        
+        git config --list | grep "credential"
     ;;
     "tmp")
         if [ ! -h $PWD/.tm_properties ]
