@@ -21,6 +21,7 @@
     cuser = commit --amend --reset-author
     un = diff
     in = diff --cached
+    inn = diff HEAD^ HEAD
     undo = reset HEAD^
     i = !git config --list | grep
     squash = !git rebase -i HEAD~$1 && false &&
