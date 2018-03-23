@@ -46,7 +46,7 @@ i!
 * in : View the indexed diff.
 * inn : Compare to previous commit.
 * undo : Cancel the current commit.
-* co : (checkout -- file) Change to the contents of the previous commit. [ git co . | git cf path/file.md ]
+* co : (checkout -- file) Change to the contents of the previous commit. [ git co . | git co path/file.md ]
 * cf : (clean unstage file) delete unstage file with [ git cf . | git cf file.md ]
 * i : Find the git setting.
 ## graph command
