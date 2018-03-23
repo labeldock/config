@@ -29,28 +29,25 @@ i!
 # GIT alias
 ## basic command
 * ago : The degree of change of remote and current brunch
-* ma : Go to Master Brunch
 * pick : Cherry pick's Shortcut
-* s : This is a shortcut for 'git status'. I can see the contents of the brunch.
-* ch : It's a shortcut to 'git checkout'.
-* rch : Checkout the remote brunch as a local brunch.
-* rp : Upload a local brunch that is not registered on the remote.
-* rpp : Upload a local brunch that is not registered on the remote.
-* rd : Delete the remote brunch, such as the current local brunch, from the remote.
-* fs : checkout (Feature start)
-* fm : Run the 'no fast forward' merge from the current brunch on the master.
-* fr : Run the 'rebase' merge from the current brunch on the master.
-* fd : Delete current branche (Feature delete)
-* aa : git add --all
-* ai : git add --interactive
-* ap : git add --patch
-* np : git reset --patch
-* cm : git commit -m
-* cadd  : amend commit
-* cuser : amend commit current user info
-* un : View the unindexed diff.
+* s :(status) This is a shortcut for 'git status'. I can see the contents of the brunch.
+* ch :(change) It's a shortcut to 'git checkout'.
+* rch :(remote change) Checkout the remote brunch as a local brunch.
+* rp  :(remote push) Upload a local brunch that is not registered on the remote.
+* rpp :(remote push with stream) Upload a local brunch that is not registered on the remote.
+* rd :(remote delete) Delete the remote brunch, such as the current local brunch, from the remote.
+* fs :(feature start) checkout (Feature start)
+* fd :(feature delete) Delete current branche (Feature delete)
+* aa :(add all) git add --all
+* ai :(add intractive) git add --interactive
+* ap :(add patch) git add --patch
+* cm :(commit) git commit -m
+* un :(unstage) View the unindexed diff.
 * in : View the indexed diff.
+* inn : Compare to previous commit.
 * undo : Cancel the current commit.
+* co : (checkout -- file) Change to the contents of the previous commit. [ git co . | git cf path/file.md ]
+* cf : (clean unstage file) delete unstage file with [ git cf . | git cf file.md ]
 * i : Find the git setting.
 ## graph command
 * ag : All graph

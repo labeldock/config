@@ -1,6 +1,5 @@
 [alias]
     ago = status -sb
-    ma  = ![ $(git symbolic-ref --short -q HEAD) == "master" ] && echo "Can not run on master brunch." || (GITFEBRANCH=$(git symbolic-ref --short -q HEAD) && echo "leave from $GITFEBRANCH brunch" && git checkout master)
     pick= cherry-pick
     s  = !git branch -a && git status
     ch = checkout
@@ -9,20 +8,18 @@
     rpp = !git push --set-upstream origin $(git symbolic-ref --short -q HEAD)
     rd = !git push origin :$(git symbolic-ref --short -q HEAD)
     fs = checkout -b
-    fm = !GITBEBRANCH=$(git symbolic-ref --short -q HEAD) && [ "$GITBEBRANCH" == "master" ] && echo "Can not do it in the 'master' brunch." || (git checkout master && echo "Try merge $GITBEBRANCH into master" && git merge --no-ff $GITBEBRANCH && "Success merge and checkout $GITBEBRANCH" && git checkout $GITBEBRANCH && git merge master)
-    fr = !GITBEBRANCH=$(git symbolic-ref --short -q HEAD) && [ "$GITBEBRANCH" == "master" ] && echo "Can not do it in the 'master' brunch." || (git checkout master && echo "Try rebase $GITBEBRANCH into master" && git rebase --no-ff $GITBEBRANCH && "Success rebase and checkout $GITBEBRANCH" && git checkout $GITBEBRANCH && git merge master)
     fd = !GITBEBRANCH=$(git symbolic-ref --short -q HEAD) && [ "$GITBEBRANCH" == "master" ] && echo "Make sure to delete the 'master' brunch manually" || (echo "Are you sure you want to delete $GITBEBRANCH [y/n]" && yn=0 && read yn && [ "$yn" == "y" ] && (git checkout master && git branch -d $GITBEBRANCH) || echo "$GITBEBRANCH Brunch deletion canceled.")
     aa = add --all
     ai = add --interactive
     ap = add --patch
-    np = reset --patch
     cm    = commit -m
-    cadd  = commit --amend -m
     cuser = commit --amend --reset-author
     un = diff
     in = diff --cached
     inn = diff HEAD^ HEAD
     undo = reset HEAD^
+    co = checkout --
+    cf = clean -df --
     i = !git config --list | grep
     squash = !git rebase -i HEAD~$1 && false &&
     ag = log --graph --all --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso
