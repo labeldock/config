@@ -28,10 +28,12 @@ i!
 
 # GIT alias
 ## basic command
-* ago : The degree of change of remote and current brunch
 * pick : Cherry pick's Shortcut
 * s :(status) This is a shortcut for 'git status'. I can see the contents of the brunch.
+* ss : The degree of change of remote and current brunch
 * ch :(change) It's a shortcut to 'git checkout'.
+* chf = checkout file 'git chf *', 'git chf index.js'
+* cdf = Delete files that do not have commit history. 'git cdf *', 'git cdf index.js'
 * rch :(remote change) Checkout the remote brunch as a local brunch.
 * rp  :(remote push) Upload a local brunch that is not registered on the remote.
 * rpp :(remote push with stream) Upload a local brunch that is not registered on the remote.
@@ -42,6 +44,8 @@ i!
 * ai :(add intractive) git add --interactive
 * ap :(add patch) git add --patch
 * cm :(commit) git commit -m
+* cma:(amend commit) git commit --amend
+* cmu:(amend commit for user) git commit --amend --reset-auther
 * un :(unstage) View the unindexed diff.
 * in : View the indexed diff.
 * inn : Compare to previous commit.
@@ -49,6 +53,7 @@ i!
 * co : (checkout -- file) Change to the contents of the previous commit. [ git co . | git co path/file.md ]
 * cf : (clean unstage file) delete unstage file with [ git cf . | git cf file.md ]
 * i : Find the git setting.
+
 ## graph command
 * ag : All graph
 * g : Curret graph
