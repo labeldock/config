@@ -28,7 +28,7 @@ function vundleinstall {
 # command
 function config {
 
-    echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup\nr!) reload your all config \ngu) git user \ngc) git credential timeout\ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nnvm) nvm-setup \nrvm) rvm-setup"
+    echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup\nr!) reload your all config \ngu) git user \ngc) git credential timeout\ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nrvm) rvm-setup \nnvm) nvm-setup \nnpmi!)clean and install npm"
 read selected
 
 case "$selected" in
@@ -109,11 +109,33 @@ case "$selected" in
     "vundle")
         vundleinstall
     ;;
+    "rvm")
+        curl -sSL https://get.rvm.io | bash -s stable
+    ;;
     "nvm")
         curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
     ;;
-    "rvm")
-        curl -sSL https://get.rvm.io | bash -s stable
+    "npmi!")
+      if [ -d node_modules ]
+      then
+        rm -rf node_modules
+      else
+        echo "node_modules is not exsist"
+      fi
+    
+      if [ -e package-lock.json ]
+      then
+        rm -f pacakge-lock.json
+      else
+        echo "pacakge-lock.json is not exsist"
+      fi
+    
+      if [ -e package.json ]
+      then
+        npm install
+      else
+        echo "You can not install the npm package because package.json is not exsist"
+      fi
     ;;
 esac
 
