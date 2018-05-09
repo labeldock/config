@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # paste to ~/.bash_profile
 # [[ -s "$HOME/config/unix-init.sh" ]] && source "$HOME/config/unix-init.sh"
 
