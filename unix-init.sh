@@ -28,7 +28,7 @@ function vundleinstall {
 # command
 function config {
 
-  echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup\nr!) reload your all config \ngu) git user \ngc) git credential timeout\ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nrvm) rvm-setup \nnvm) nvm-setup \nnpmi!)clean and install npm"
+  echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup\nr!) reload your all config \ngu) git user \ngc) git credential timeout\ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nrvm) rvm-setup \nnvm) nvm-setup \nnl) nvm use lts \nnl!) nvm install lts \nnpmi!)clean and install npm"
   read selected
 
   case "$selected" in
@@ -116,6 +116,12 @@ function config {
     ;;
   "nvm")
     curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
+    ;;
+  "nl")
+    nvm use lts/*
+    ;;
+  "nl!")
+    nvm install lts/*
     ;;
   "npmi!")
     if [ -d node_modules ]
