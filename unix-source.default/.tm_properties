@@ -2,6 +2,6 @@ softWrap = true
 softTabs = true
 tabSize = 2
 
-include = "{$include,.src,.vim,.vimrc,.tmux.conf,.tm_properties,.gitconfig,.gitignore,.npmignore,.npmrc,.nvmrc,.babelrc,.editorconfig,.eslintrc*,.eslintignore,.bin,.circleci,.storybook}"
+include = "{$include,.src,.util,.vim,.vimrc,.tmux.conf,.tm_properties,.gitconfig,.gitignore,.npmignore,.npmrc,.nvmrc,.babelrc,.editorconfig,.eslintrc*,.eslintignore,.bin,.circleci,.storybook}"
 excludeInFileChooser = "{$excludeInFileChooser,node_modules,log,vendor,tmp,META-INF,.svn}"
 excludeInFolderSearch = "{$excludeInFolderSearch,$extraExcludes,node_modules,d:}"
