@@ -32,8 +32,10 @@ i!
 * s :(status) This is a shortcut for 'git status'. I can see the contents of the brunch.
 * ss : The degree of change of remote and current brunch
 * ch :(change) It's a shortcut to 'git checkout'.
-* chf = checkout file 'git chf *', 'git chf index.js'
-* cdf = Delete files that do not have commit history. 'git cdf *', 'git cdf index.js'
+* chf : checkout file 'git chf *', 'git chf index.js'
+* cdf : Delete files that do not have commit history. 'git cdf *', 'git cdf index.js'
+* pushf : push force
+* pullf : pull force
 * rch :(remote change) Checkout the remote brunch as a local brunch.
 * rp  :(remote push) Upload a local brunch that is not registered on the remote.
 * rpp :(remote push with stream) Upload a local brunch that is not registered on the remote.
