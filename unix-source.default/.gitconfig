@@ -37,3 +37,10 @@
     gga= !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --author=$1 && false &&
     aggr= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --grep=$1 && false &&
     ggr= !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --grep=$1 && false &&
+    svfetch=svn fetch
+    svbranch=!git svfetch && git branch -r && false &&
+    svsetignore=svn show-ignore > .gitignore
+    svclone=!git svn clone -s $1 -r HEAD && git svsetignore &&false &&
+    svignore=svn show-ignore
+    svpush=svn dcommit
+    svpull=svn rebase
