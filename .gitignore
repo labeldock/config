@@ -1,3 +1,4 @@
 unix-source
 *.removed.*
+*.backup.*
 .DS_Store
