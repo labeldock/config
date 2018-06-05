@@ -1,4 +1,9 @@
-unix-source
-*.removed.*
-*.backup.*
 .DS_Store
+
+dotfiles.active
+dotfiles.backup.*
+
+#legacy
+unix-source
+unix-source.backup.*
+*.removed.*

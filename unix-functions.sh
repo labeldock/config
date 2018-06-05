@@ -1,22 +1,52 @@
 # setting
 LINK_TARGET_FILES=".gitconfig .vim .vimrc .tmux.conf .tm_properties"
 
-function configbootstrap {
-  # 미리 정의해놓은 설정파일들 링크 처리
-  for FILE_ITEM in $LINK_TARGET_FILES
-  do
-
-    if [ ! -h $HOME/$FILE_ITEM ]
-    then
-      echo "link file $HOME/config/unix-source/$FILE_ITEM"
-      ln -sf $HOME/config/unix-source/$FILE_ITEM $HOME/$FILE_ITEM
-    fi
-  done
+# read_val "프롬프트 질문 내용" "변수이름"
+read_val() {
+  if [ ! -z $2 ]; then
+    local val
+    printf "$1"
+    read -e val
+    eval "$2='${val}'"
+  fi
 }
 
-function configvundleinstall {
-  vim +PluginInstall +qall
+# default_with_read_val "변수이름" "기본입력값" "변수이름에 값이 없을시 프롬프트 활성화 하며 물어볼 내용"
+default_with_read_val() {
+  if [[ -z $2 || $2 == false ]]; then
+    eval "read_val '$3' $1"
+  else
+    eval "$1='$2'"
+  fi
 }
+
+
+CONFIG_TEMPLATES_PATH=$HOME/config/dotfiles.templates
+CONFIG_ACTIVE_PATH=$HOME/config/dotfiles.active
+
+configRemoveActivedDotfils() {
+  if [[ -z $1 ]]; then
+    return 1
+  fi
+  
+  rm $CONFIG_ACTIVE_PATH/$1
+  rm $HOME/$1
+  
+  echo "link file $CONFIG_ACTIVE_PATH/$1"
+}
+
+configCopyAndLinkDotfils() {
+  if [[ -z $1 ]]; then
+    return 1
+  fi
+  
+  cp $CONFIG_TEMPLATES_PATH/$1 $CONFIG_ACTIVE_PATH/$1
+  echo "copy file $CONFIG_ACTIVE_PATH/$1"
+  
+  ln -sf $CONFIG_ACTIVE_PATH/$1 $HOME/$1
+  echo "link file $CONFIG_ACTIVE_PATH/$1"
+}
+
 
 function configunixfunctions {
   
@@ -25,40 +55,68 @@ function configunixfunctions {
 
   case "$selected" in
   "i!")
-    local UTIME=$(date +%s)
+    read_val "Do you want to install all of them automatically?[y]" automatically
+    [[ $automatically =~ ^(y|Y)$ ]] && automatically=y || automatically=false
     
-    if [ -d $HOME/config/unix-source ]
-    then
-      cp -rf "$HOME/config/unix-source" "$HOME/config/unix-source.backup.$UTIME"
-      rm -rf "$HOME/config/unix-source"
-      echo "removed $HOME/config/unix-source"
+    # setup vundle
+    default_with_read_val setupGitConfig $automatically "Do you setup setup .gitconfig?[y]"
+    default_with_read_val setupVimVundle $automatically "Do you setup .vimrc and vundle?[y]"
+    default_with_read_val setupTmuxConfig $automatically "Do you setup setup .tmux.conf?[y]"
+    default_with_read_val setupTmProperties $automatically "Do you setup .tm_properties?[y]"
+    
+    # backup legacy dotfiles
+    local UTIME=$(date +%s)
+    if [[ -d $HOME/config/dotfiles.active ]]; then
+      cp -rf "$HOME/config/dotfiles.active" "$HOME/config/dotfiles.backup.$UTIME"
+      rm -rf "$HOME/config/dotfiles.active"
+      echo "removed $HOME/config/dotfiles.active"
     fi
     
     
-    #read -p "Do you want to install all of them automatically?[y/n]" automatically
-    #
-    #if [[ automatically == 'y' ]]; then
-    #  echo 'auto!'
-    #fi
+    if [[ ! -d $CONFIG_ACTIVE_PATH ]]; then
+      mkdir $CONFIG_ACTIVE_PATH
+    fi
     
     
-    rm -rf "$HOME/config/unix-source.default/.vim/bundle/Vundle.vim"
-    git clone https://github.com/VundleVim/Vundle.vim.git "$HOME/config/unix-source.default/.vim/bundle/Vundle.vim/"
-        
-    cp -rf "$HOME/config/unix-source.default" "$HOME/config/unix-source"
-    echo "copyed $HOME/config/unix-source.default to $HOME/config/unix-source"
-        
-    for FILE_ITEM in $LINK_TARGET_FILES
-    do
-      rm $HOME/$FILE_ITEM
-      echo "rm $FILE_ITEM"
-    done
-        
-    configbootstrap
-        
-    configvundleinstall
     
-    tmux source-file ~/.tmux.conf
+    # .gitconfig
+    if [[ $setupGitConfig == 'y' ]]; then
+      configCopyAndLinkDotfils ".gitconfig"
+    else
+      echo "Sorry. Custom setup is not ready yet, but it will work soon."
+    fi
+    
+    
+    # git, vundle
+    if [[ $setupVimVundle == 'y' ]]; then
+      configCopyAndLinkDotfils ".vimrc"
+      
+      rm -rf "$HOME/config/dotfiles.templates/.vim/bundle/Vundle.vim"
+      git clone https://github.com/VundleVim/Vundle.vim.git "$HOME/config/dotfiles.templates/.vim/bundle/Vundle.vim/"
+      vim +PluginInstall +qall
+      echo "install complete vundle"
+    else
+      echo "Sorry. Custom setup is not ready yet, but it will work soon."
+    fi
+    
+    
+    # setup tmux
+    if [[ $setupTmuxConfig == 'y' ]]; then
+      configCopyAndLinkDotfils ".tmux.conf"
+      tmux source-file ~/.tmux.conf
+    else
+      echo "Sorry. Custom setup is not ready yet, but it will work soon."
+    fi
+    
+    
+    # setup textmate
+    if [[ $setupTmProperties == 'y' ]]; then
+      configCopyAndLinkDotfils ".tm_properties"
+    else
+      echo "Sorry. Custom setup is not ready yet, but it will work soon."
+    fi
+
+    echo "complete config i!"
     ;;
   "gu")
     echo "user name"
@@ -104,9 +162,6 @@ function configunixfunctions {
     then
       echo "tabSize=$tabsize" >> "$PWD/.tm_properties"
     fi
-    ;;
-  "vundle")
-    configvundleinstall
     ;;
   "rvm")
     curl -sSL https://get.rvm.io | bash -s stable
