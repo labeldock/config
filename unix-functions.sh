@@ -30,7 +30,8 @@ configRemoveActivedDotfils() {
   rm -rf $CONFIG_ACTIVE_PATH/$1
   rm -rf $HOME/$1
   
-  echo "link file $CONFIG_ACTIVE_PATH/$1"
+  echo "remove file $CONFIG_ACTIVE_PATH/$1"
+  echo "remove file $HOME/$1"
 }
 
 configCopyAndLinkDotfils() {
@@ -55,8 +56,8 @@ configCopyAndLinkDotfils() {
 configTmPropertiesReadVal() {
   local softtab
   local tabsize
-  read -p "TextMate::softtab?[true/false]" softtab
-  read -p "TextMate::tabsize?(2/4/...)" tabsize
+  read -p "TextMate::softtab? [true/false] " softtab
+  read -p "TextMate::tabsize? (2/4/...) " tabsize
   [[ ! -z $softtab ]] && eval "$1='$softtab'"
   [[ ! -z $softtab ]] && eval "$2='$tabsize'"
 }
@@ -85,7 +86,7 @@ function configunixfunctions {
   "i!")
     # automatic install
     local AUTOMATIC_INSTALL
-    read_val "Do you want to install all of them AUTOMATIC_INSTALL?[y]" AUTOMATIC_INSTALL
+    read_val "Do you want to install all of them AUTOMATIC_INSTALL? [y] " AUTOMATIC_INSTALL
     [[ $AUTOMATIC_INSTALL =~ ^(y|Y)$ ]] && AUTOMATIC_INSTALL=y || AUTOMATIC_INSTALL=false
     
     
@@ -94,10 +95,10 @@ function configunixfunctions {
     local SHOULD_SETUP_VIM
     local SHOULD_SETUP_TMUX
     local SHOULD_SETUP_TM_PROPERTIES
-    default_with_read_val SHOULD_SETUP_GIT $AUTOMATIC_INSTALL "Do you setup .gitconfig?[y]"
-    default_with_read_val SHOULD_SETUP_VIM $AUTOMATIC_INSTALL "Do you setup .vimrc and vundle?[y]"
-    default_with_read_val SHOULD_SETUP_TMUX $AUTOMATIC_INSTALL "Do you setup setup .tmux.conf?[y]"
-    default_with_read_val SHOULD_SETUP_TM_PROPERTIES $AUTOMATIC_INSTALL "Do you setup .tm_properties?[y]"
+    default_with_read_val SHOULD_SETUP_GIT $AUTOMATIC_INSTALL "Do you setup .gitconfig? [y] "
+    default_with_read_val SHOULD_SETUP_VIM $AUTOMATIC_INSTALL "Do you setup .vimrc and vundle? [y] "
+    default_with_read_val SHOULD_SETUP_TMUX $AUTOMATIC_INSTALL "Do you setup setup .tmux.conf? [y] "
+    default_with_read_val SHOULD_SETUP_TM_PROPERTIES $AUTOMATIC_INSTALL "Do you setup .tm_properties? [y] "
     
     
     #
@@ -201,22 +202,19 @@ function configunixfunctions {
     nvm install lts/*
     ;;
   "npmi!")
-    if [ -d node_modules ]
-    then
+    if [[ -d node_modules ]]; then
       rm -rf node_modules
     else
       echo "node_modules is not exsist"
     fi
     
-    if [ -e package-lock.json ]
-    then
+    if [[ -e package-lock.json ]]; then
       rm -f pacakge-lock.json
     else
       echo "pacakge-lock.json is not exsist"
     fi
     
-    if [ -e package.json ]
-    then
+    if [[ -e package.json ]] then
       npm install
     else
       echo "You can not install the npm package because package.json is not exsist"

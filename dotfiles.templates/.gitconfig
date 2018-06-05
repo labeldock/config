@@ -6,7 +6,7 @@
     chf = checkout --
     cdf = clean -df --
     pushf = push -f
-    pullf = !git reset origin/$(git symbolic-ref --short -q HEAD) --hard
+    pullf = !git fetch && git reset origin/$(git symbolic-ref --short -q HEAD) --hard
     rch = !git checkout -t origin/$1 && false &&
     rp  = !git push origin $(git symbolic-ref --short -q HEAD)
     rpp = !git push --set-upstream origin $(git symbolic-ref --short -q HEAD)
