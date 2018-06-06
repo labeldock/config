@@ -54,12 +54,11 @@ configCopyAndLinkDotfils() {
 
 #softtab $1 = softtab $2 = $tabsize
 configTmPropertiesReadVal() {
-  local softtab
-  local tabsize
   read -p "TextMate::softtab? [true/false] " softtab
   read -p "TextMate::tabsize? (2/4/...) " tabsize
-  [[ ! -z $softtab ]] && eval "$1='$softtab'"
-  [[ ! -z $softtab ]] && eval "$2='$tabsize'"
+  echo "1 $softtab $tabsize"
+  eval "$1='$softtab'"
+  eval "$2='$tabsize'"
 }
 
 # $1 = path $2 = $softtab $3 = $tabsize
@@ -183,13 +182,15 @@ function configunixfunctions {
     git config --list | grep "credential"
     ;;
   "tmp")
-    if [[ ! -h $PWD/.tm_properties ]]; then
-      touch .tm_properties
-    fi
     local softtab
     local tabsize
     configTmPropertiesReadVal softtab tabsize
-    configTmPropertiesSet "$PWD/.tm_properties" softtab tabsize
+    
+    if [[ ! -h $PWD/.tm_properties ]]; then
+      touch .tm_properties
+    fi
+    
+    configTmPropertiesSet "$PWD/.tm_properties" $softtab $tabsize
     ;;
   "rvm")
     curl -sSL https://get.rvm.io | bash -s stable
