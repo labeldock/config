@@ -151,7 +151,6 @@ function configunixfunctions {
     # setup textmate
     if [[ $SHOULD_SETUP_TM_PROPERTIES == 'y' ]]; then
       configCopyAndLinkDotfils ".tm_properties"
-      echo "tmSoftTab, tmTabSize = ${TM_SOFTTAB}, ${TM_TABSIZE}"
       echo "softWrap=${TM_SOFTTAB}" >> "$CONFIG_ACTIVE_PATH/.tm_properties"
       echo "softTabs=${TM_TABSIZE}" >> "$CONFIG_ACTIVE_PATH/.tm_properties"
     fi
@@ -214,7 +213,7 @@ function configunixfunctions {
       echo "pacakge-lock.json is not exsist"
     fi
     
-    if [[ -e package.json ]] then
+    if [[ -e package.json ]]; then
       npm install
     else
       echo "You can not install the npm package because package.json is not exsist"
