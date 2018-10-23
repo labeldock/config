@@ -14,7 +14,7 @@ read_val() {
 
 # default_with_read_val "변수이름" "기본입력값" "변수이름에 값이 없을시 프롬프트 활성화 하며 물어볼 내용"
 default_with_read_val() {
-  if [[ -z $2 || $2 == false ]]; then
+  if [ -z $2 || $2 == false ]; then
     eval "read_val '$3' $1"
   else
     eval "$1='$2'"
@@ -23,7 +23,7 @@ default_with_read_val() {
 
 
 configRemoveActivedDotfils() {
-  if [[ -z $1 ]]; then
+  if [ -z $1 ]; then
     return 1
   fi
   
@@ -35,12 +35,12 @@ configRemoveActivedDotfils() {
 }
 
 configCopyAndLinkDotfils() {
-  if [[ -z $1 ]]; then
+  if [ -z $1 ]; then
     return 1
   fi
   configRemoveActivedDotfils $1
   
-  if [[ -d "$CONFIG_TEMPLATES_PATH/$1" ]]; then
+  if [ -d "$CONFIG_TEMPLATES_PATH/$1" ]; then
     cp -rf $CONFIG_TEMPLATES_PATH/$1 $CONFIG_ACTIVE_PATH/$1
     echo "copy directory $CONFIG_ACTIVE_PATH/$1"
   else
@@ -78,7 +78,7 @@ configTmPropertiesSet(){
 
 function configunixfunctions {
   
-  echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup \ngu) git user \ngc) git credential timeout\ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nrvm) rvm-setup \nnvm) nvm-setup \nnl) nvm install lts \nnpmi!)clean and install npm"
+  echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup \ngu) git user \ngc) git credential timeout\ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nrvm) rvm-setup \nnvm) nvm-setup \nnl) nvm install lts \nnpmi!)clean and install npm \nkp) Kill processor by port"
   read selected
 
   case "$selected" in
@@ -103,31 +103,31 @@ function configunixfunctions {
     #
     local TM_SOFTTAB=true
     local TM_TABSIZE=2
-    if [[ $SHOULD_SETUP_TM_PROPERTIES == "y" && $AUTOMATIC_INSTALL == false ]]; then
+    if [ $SHOULD_SETUP_TM_PROPERTIES == "y" && $AUTOMATIC_INSTALL == false ]; then
       configTmPropertiesReadVal TM_SOFTTAB TM_TABSIZE
     fi
     
     
     # backup legacy dotfiles
     local UTIME=$(date +%s)
-    if [[ -d $HOME/config/dotfiles.active ]]; then
+    if [ -d $HOME/config/dotfiles.active ]; then
       cp -rf "$HOME/config/dotfiles.active" "$HOME/config/dotfiles.backup.$UTIME"
     fi
     
     
-    if [[ ! -d $CONFIG_ACTIVE_PATH ]]; then
+    if [ ! -d $CONFIG_ACTIVE_PATH ]; then
       mkdir $CONFIG_ACTIVE_PATH
     fi
     
     
     # .gitconfig
-    if [[ $SHOULD_SETUP_GIT == 'y' ]]; then
+    if [ $SHOULD_SETUP_GIT == 'y' ]; then
       configCopyAndLinkDotfils ".gitconfig"
     fi
     
     
     # git, vundle
-    if [[ $SHOULD_SETUP_VIM == 'y' ]]; then
+    if [ $SHOULD_SETUP_VIM == 'y' ]; then
       rm -rf "$CONFIG_TEMPLATES_PATH/.vim/bundle/Vundle.vim"
       git clone https://github.com/VundleVim/Vundle.vim.git "$CONFIG_TEMPLATES_PATH/.vim/bundle/Vundle.vim/"
       
@@ -141,14 +141,14 @@ function configunixfunctions {
     
     
     # setup tmux
-    if [[ $SHOULD_SETUP_TMUX == 'y' ]]; then
+    if [ $SHOULD_SETUP_TMUX == 'y' ]; then
       configCopyAndLinkDotfils ".tmux.conf"
       tmux source-file ~/.tmux.conf
     fi
     
     
     # setup textmate
-    if [[ $SHOULD_SETUP_TM_PROPERTIES == 'y' ]]; then
+    if [ $SHOULD_SETUP_TM_PROPERTIES == 'y' ]; then
       configCopyAndLinkDotfils ".tm_properties"
       echo "softWrap=${TM_SOFTTAB}" >> "$CONFIG_ACTIVE_PATH/.tm_properties"
       echo "softTabs=${TM_TABSIZE}" >> "$CONFIG_ACTIVE_PATH/.tm_properties"
@@ -171,9 +171,9 @@ function configunixfunctions {
     echo "credential.helper cache timeout ? [y=forever,n|0==cancle,number=millisecond]"
     read ctimeout
         
-    if [[ $ctimeout == "Y" || $ctimeout == "y" ]]; then
+    if [ $ctimeout == "Y" || $ctimeout == "y" ]; then
       git config credential.helper cache
-    elif [[ $ctimeout == "M" || $ctimeout == "n" || $ctimeout == "0" ]]; then
+    elif [ $ctimeout == "M" || $ctimeout == "n" || $ctimeout == "0" ]; then
       git config credential.helper "cache --timeout=0"
     else
       git config credential.helper "cache --timeout=$ctimeout"
@@ -186,7 +186,7 @@ function configunixfunctions {
     local tabsize
     configTmPropertiesReadVal softtab tabsize
     
-    if [[ ! -h $PWD/.tm_properties ]]; then
+    if [ ! -h $PWD/.tm_properties ]; then
       touch .tm_properties
     fi
     
@@ -202,23 +202,29 @@ function configunixfunctions {
     nvm install lts/*
     ;;
   "npmi!")
-    if [[ -d node_modules ]]; then
+    if [ -d node_modules ]; then
       rm -rf node_modules
     else
       echo "node_modules is not exsist"
     fi
     
-    if [[ -e package-lock.json ]]; then
+    if [ -e package-lock.json ]; then
       rm -f pacakge-lock.json
     else
       echo "pacakge-lock.json is not exsist"
     fi
     
-    if [[ -e package.json ]]; then
+    if [ -e package.json ]; then
       npm install
     else
       echo "You can not install the npm package because package.json is not exsist"
     fi
-    ;;
+  ;;
+  "kp")
+    local KILL_PORT
+    echo "Please enter the port the processor is using. ex) 8080"
+    read KILL_PORT
+    kill -9 $(lsof -t -i:$KILL_PORT) && echo "kp $KILL_PORT command success" || echo "kp $KILL_PORT command failed"
+  ;;
   esac
 }
