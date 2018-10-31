@@ -4,7 +4,7 @@ CONFIG_ACTIVE_PATH="$HOME/config/dotfiles.active"
 
 # read_val "프롬프트 질문 내용" "변수이름"
 read_val() {
-  if [ ! -z $2 ]; then
+  if [[ ! -z $2 ]]; then
     local val
     printf "$1"
     read -e val
@@ -14,7 +14,7 @@ read_val() {
 
 # default_with_read_val "변수이름" "기본입력값" "변수이름에 값이 없을시 프롬프트 활성화 하며 물어볼 내용"
 default_with_read_val() {
-  if [ -z $2 || $2 == false ]; then
+  if [[ -z $2 || $2 == false ]]; then
     eval "read_val '$3' $1"
   else
     eval "$1='$2'"
@@ -23,7 +23,7 @@ default_with_read_val() {
 
 
 configRemoveActivedDotfils() {
-  if [ -z $1 ]; then
+  if [[ -z $1 ]]; then
     return 1
   fi
   
@@ -35,7 +35,7 @@ configRemoveActivedDotfils() {
 }
 
 configCopyAndLinkDotfils() {
-  if [ -z $1 ]; then
+  if [[ -z $1 ]]; then
     return 1
   fi
   configRemoveActivedDotfils $1
@@ -63,13 +63,13 @@ configTmPropertiesReadVal() {
 
 # $1 = path $2 = $softtab $3 = $tabsize
 configTmPropertiesSet(){
-  if [ $2 ]
+  if [[ $2 ]]
   then
     echo "softWrap=$2" >> "$1"
     echo "softTabs=$2" >> "$1"
   fi
       
-  if [ $3 ]
+  if [[ $3 ]]
   then
     echo "tabSize=$3" >> "$1"
   fi
@@ -94,40 +94,40 @@ function configunixfunctions {
     local SHOULD_SETUP_VIM
     local SHOULD_SETUP_TMUX
     local SHOULD_SETUP_TM_PROPERTIES
+    
     default_with_read_val SHOULD_SETUP_GIT $AUTOMATIC_INSTALL "Do you setup .gitconfig? [y] "
     default_with_read_val SHOULD_SETUP_VIM $AUTOMATIC_INSTALL "Do you setup .vimrc and vundle? [y] "
     default_with_read_val SHOULD_SETUP_TMUX $AUTOMATIC_INSTALL "Do you setup setup .tmux.conf? [y] "
     default_with_read_val SHOULD_SETUP_TM_PROPERTIES $AUTOMATIC_INSTALL "Do you setup .tm_properties? [y] "
     
-    
     #
     local TM_SOFTTAB=true
     local TM_TABSIZE=2
-    if [ $SHOULD_SETUP_TM_PROPERTIES == "y" && $AUTOMATIC_INSTALL == false ]; then
+    if [[ $SHOULD_SETUP_TM_PROPERTIES == "y" && $AUTOMATIC_INSTALL == false ]]; then
       configTmPropertiesReadVal TM_SOFTTAB TM_TABSIZE
     fi
     
     
     # backup legacy dotfiles
     local UTIME=$(date +%s)
-    if [ -d $HOME/config/dotfiles.active ]; then
+    if [[ -d $HOME/config/dotfiles.active ]]; then
       cp -rf "$HOME/config/dotfiles.active" "$HOME/config/dotfiles.backup.$UTIME"
     fi
     
     
-    if [ ! -d $CONFIG_ACTIVE_PATH ]; then
+    if [[ ! -d $CONFIG_ACTIVE_PATH ]]; then
       mkdir $CONFIG_ACTIVE_PATH
     fi
     
     
     # .gitconfig
-    if [ $SHOULD_SETUP_GIT == 'y' ]; then
+    if [[ $SHOULD_SETUP_GIT == 'y' ]]; then
       configCopyAndLinkDotfils ".gitconfig"
     fi
     
     
     # git, vundle
-    if [ $SHOULD_SETUP_VIM == 'y' ]; then
+    if [[ $SHOULD_SETUP_VIM == 'y' ]]; then
       rm -rf "$CONFIG_TEMPLATES_PATH/.vim/bundle/Vundle.vim"
       git clone https://github.com/VundleVim/Vundle.vim.git "$CONFIG_TEMPLATES_PATH/.vim/bundle/Vundle.vim/"
       
@@ -141,14 +141,14 @@ function configunixfunctions {
     
     
     # setup tmux
-    if [ $SHOULD_SETUP_TMUX == 'y' ]; then
+    if [[ $SHOULD_SETUP_TMUX == 'y' ]]; then
       configCopyAndLinkDotfils ".tmux.conf"
       tmux source-file ~/.tmux.conf
     fi
     
     
     # setup textmate
-    if [ $SHOULD_SETUP_TM_PROPERTIES == 'y' ]; then
+    if [[ $SHOULD_SETUP_TM_PROPERTIES == 'y' ]]; then
       configCopyAndLinkDotfils ".tm_properties"
       echo "softWrap=${TM_SOFTTAB}" >> "$CONFIG_ACTIVE_PATH/.tm_properties"
       echo "softTabs=${TM_TABSIZE}" >> "$CONFIG_ACTIVE_PATH/.tm_properties"
