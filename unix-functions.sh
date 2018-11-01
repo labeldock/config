@@ -40,7 +40,7 @@ configCopyAndLinkDotfils() {
   fi
   configRemoveActivedDotfils $1
   
-  if [ -d "$CONFIG_TEMPLATES_PATH/$1" ]; then
+  if [[ -d "$CONFIG_TEMPLATES_PATH/$1" ]]; then
     cp -rf $CONFIG_TEMPLATES_PATH/$1 $CONFIG_ACTIVE_PATH/$1
     echo "copy directory $CONFIG_ACTIVE_PATH/$1"
   else
@@ -171,9 +171,9 @@ function configunixfunctions {
     echo "credential.helper cache timeout ? [y=forever,n|0==cancle,number=millisecond]"
     read ctimeout
         
-    if [ $ctimeout == "Y" || $ctimeout == "y" ]; then
+    if [[ $ctimeout == "Y" || $ctimeout == "y" ]]; then
       git config credential.helper cache
-    elif [ $ctimeout == "M" || $ctimeout == "n" || $ctimeout == "0" ]; then
+    elif [[ $ctimeout == "M" || $ctimeout == "n" || $ctimeout == "0" ]]; then
       git config credential.helper "cache --timeout=0"
     else
       git config credential.helper "cache --timeout=$ctimeout"
@@ -186,7 +186,7 @@ function configunixfunctions {
     local tabsize
     configTmPropertiesReadVal softtab tabsize
     
-    if [ ! -h $PWD/.tm_properties ]; then
+    if [[ ! -h $PWD/.tm_properties ]]; then
       touch .tm_properties
     fi
     
@@ -202,19 +202,19 @@ function configunixfunctions {
     nvm install lts/*
     ;;
   "npmi!")
-    if [ -d node_modules ]; then
+    if [[ -d node_modules ]]; then
       rm -rf node_modules
     else
       echo "node_modules is not exsist"
     fi
     
-    if [ -e package-lock.json ]; then
+    if [[ -e package-lock.json ]]; then
       rm -f pacakge-lock.json
     else
       echo "pacakge-lock.json is not exsist"
     fi
     
-    if [ -e package.json ]; then
+    if [[ -e package.json ]]; then
       npm install
     else
       echo "You can not install the npm package because package.json is not exsist"
