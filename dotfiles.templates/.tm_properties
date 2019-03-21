@@ -1,3 +1,5 @@
-include = "{$include,.vim,.vimrc,.tmux.conf,.tm_properties,.editorconfig,.gitconfig,.gitignore,.gitmodules,.npmignore,.npmrc,.nvmrc,.babelrc*,.eslintrc*,.eslintignore,.postcssrc*,.bin,.circleci,.storybook,.nuxt,.src,.util,.cache}"
+include = "{$include,.vim,.vimrc,.tmux.conf,.tm_properties,.editorconfig,.gitconfig,.gitignore,.gitmodules,.npmignore,.npmrc,.nvmrc,.babelrc*,.eslintrc*,.eslintignore,.postcssrc*,.bin,.circleci,.storybook,.nuxt,.src,.util,.cache,.env*}"
 excludeInFileChooser = "{$excludeInFileChooser,node_modules,log,vendor,tmp,META-INF,.svn}"
 excludeInFolderSearch = "{$excludeInFolderSearch,$extraExcludes,node_modules,d:}"
+softWrap=true
+softTabs=2

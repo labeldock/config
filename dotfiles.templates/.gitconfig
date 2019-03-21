@@ -10,7 +10,7 @@
     rch = !git checkout -t origin/$1 && false &&
     rp  = !git push origin $(git symbolic-ref --short -q HEAD)
     rpp = !git push --set-upstream origin $(git symbolic-ref --short -q HEAD)
-    rd = !git push origin :$(git symbolic-ref --short -q HEAD)
+    rd = !git push origin :$(git symbolic-ref --short -q HEAD) && git branch --unset-upstream
     fs = checkout -b
     fd = !GITBEBRANCH=$(git symbolic-ref --short -q HEAD) && [ "$GITBEBRANCH" == "master" ] && echo "Make sure to delete the 'master' brunch manually" || (echo "Are you sure you want to delete $GITBEBRANCH [y/n]" && yn=0 && read yn && [ "$yn" == "y" ] && (git checkout master && git branch -d $GITBEBRANCH) || echo "$GITBEBRANCH Brunch deletion canceled.")
     aa = add --all
