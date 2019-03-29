@@ -9,6 +9,11 @@ You must have git installed. and..
 ```bash
 cd ~ && git clone https://github.com/labeldock/config.git
 ```
+# command
+```
+config
+```
+![configlow](https://user-images.githubusercontent.com/1593115/54964847-58da0680-4fb1-11e9-9f53-7728eb73f5b1.gif)
 
 # setting
 ```bash
