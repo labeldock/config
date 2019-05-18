@@ -8,11 +8,11 @@
     pushf = push -f
     pullf = !git fetch && git reset origin/$(git symbolic-ref --short -q HEAD) --hard
     rc  = clone --recursive
-    ru  = submodule update --init
+    ru  = submodule update --init --recursive
     rch = !git checkout -t origin/$1 && false &&
     rp  = !git push origin $(git symbolic-ref --short -q HEAD)
     rpp = !git push --set-upstream origin $(git symbolic-ref --short -q HEAD)
-    rd = !git push origin :$(git symbolic-ref --short -q HEAD)
+    rd = !git push origin :$(git symbolic-ref --short -q HEAD) && git branch --unset-upstream
     fs = checkout -b
     fd = !GITBEBRANCH=$(git symbolic-ref --short -q HEAD) && [ "$GITBEBRANCH" == "master" ] && echo "Make sure to delete the 'master' brunch manually" || (echo "Are you sure you want to delete $GITBEBRANCH [y/n]" && yn=0 && read yn && [ "$yn" == "y" ] && (git checkout master && git branch -d $GITBEBRANCH) || echo "$GITBEBRANCH Brunch deletion canceled.")
     aa = add --all
@@ -28,7 +28,9 @@
     gu = config user.name
     ge = config user.email
     gt = !git config --list | grep ^user.
-    i  = !git config --list | grep
+    gcc = config credential.helper cache
+    gcd = config credential.helper "cache --timeout=0"
+    t  = !git config --list | grep
     squash = !git rebase -i HEAD~$1 && false &&
     ag = log --graph --all --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso
     g  = log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso
