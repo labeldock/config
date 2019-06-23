@@ -1,14 +1,14 @@
 [alias]
     pick= cherry-pick
+    pushf = push -f
+    pullf = !git fetch --tags && git reset origin/$(git symbolic-ref --short -q HEAD) --hard
     s   = !git branch -a && git status
     ss  = status -sb
+    sc  = clone --recursive
+    su  = submodule update --init --recursive
     ch  = checkout
     chf = checkout --
     cdf = clean -df --
-    pushf = push -f
-    pullf = !git fetch && git reset origin/$(git symbolic-ref --short -q HEAD) --hard
-    rc  = clone --recursive
-    ru  = submodule update --init --recursive
     rch = !git checkout -t origin/$1 && false &&
     rp  = !git push origin $(git symbolic-ref --short -q HEAD)
     rpp = !git push --set-upstream origin $(git symbolic-ref --short -q HEAD)
@@ -21,26 +21,29 @@
     cm  = commit -m
     cma = commit --amend
     cmu = commit --amend --reset-author
-    un = diff
-    in = diff --cached
-    inn = diff HEAD^ HEAD
+    tt = tag -l
+    ttl = !git describe --tags `git rev-list --tags --max-count=1`
+    tchl = !git checkout $(git ttl)
+    ts = !git tag -a "v$1" && false &&
+    tpp = push --tags
+    td = !git tag -d "v$1" && false &&
+    dun = diff
+    din = diff --cached
+    d-1 = diff HEAD^ HEAD
     undo = reset HEAD^
-    gu = config user.name
-    ge = config user.email
-    gt = !git config --list | grep ^user.
+    gun = config user.name
+    gue = config user.email
+    gut = !git config --list | grep ^user.
+    gcn = config credential.helper "cache --timeout=0"
     gcc = config credential.helper cache
-    gcd = config credential.helper "cache --timeout=0"
-    t  = !git config --list | grep
+    gcd = config --unset credential.helper
+    c  = !git config --list | grep
     squash = !git rebase -i HEAD~$1 && false &&
     ag = log --graph --all --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso
     g  = log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso
-    agr= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --grep=$1 && false &&
-    gr = !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --grep=$1 && false &&
     aga= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --grep=$1 && false &&
     ga = !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --author=$1 && false &&
     agg= log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=*
     gg = log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=*
     agga= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --author=$1 && false &&
     gga= !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --author=$1 && false &&
-    aggr= !git log --all --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --grep=$1 && false &&
-    ggr= !git log --graph --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso --remotes=* --grep=$1 && false &&
