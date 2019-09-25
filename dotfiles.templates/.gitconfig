@@ -4,8 +4,9 @@
     pullf = !git fetch --tags && git reset origin/$(git symbolic-ref --short -q HEAD) --hard
     s   = !git branch -a && git status
     ss  = status -sb
-    sc  = clone --recursive
-    su  = submodule update --init --recursive
+    sc  = submodule update --init --recursive
+    su  = submodule update --recursive
+    spull = submodule foreach git pull
     ch  = checkout
     chf = checkout --
     cdf = clean -df --
