@@ -1,5 +1,5 @@
 include = "{$include,.*}"
-exclude = "{$exclude,.git}"
+exclude = "{$exclude,.git,.svn}"
 excludeInFileChooser = "{$excludeInFileChooser,node_modules,log,vendor,tmp,META-INF,.svn,.git}"
 excludeInFolderSearch = "{$excludeInFolderSearch,$extraExcludes,node_modules,d:}"
 softWrap=true
