@@ -23,6 +23,7 @@
     cma = commit --amend
     cmau = commit --amend --reset-author
     cmad = !GIT_COMMITTER_DATE="$1" commit --amend --no-edit --date "$1"
+    chmodx = update-index --add --chmod=+x
     tt = tag -l
     ttl = !git describe --tags `git rev-list --tags --max-count=1`
     tchl = !git checkout $(git ttl)
