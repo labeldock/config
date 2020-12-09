@@ -8,7 +8,7 @@ main() {
   local ENABLE_RIGHT_NOW
   read_val "Start up service enable? [y/n]" ENABLE_RIGHT_NOW
   
-  if [ "$ENABLE_RIGHT_NOW" == "y" ]; then
+  if [ "$ENABLE_RIGHT_NOW" = "y" ]; then
     sudo systemctl enable kiosk.service && echo "Success enable kiosk.service"
   else
     echo "To use the startup service, use the command below"
