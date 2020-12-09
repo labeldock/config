@@ -13,7 +13,7 @@ main() {
     ./purge-apt.sh
   fi
 
-  ./first-upgrade.sh
+  ./upgrade-apt.sh
   ./install-git-vim.sh
   ./install-nvm.sh
 
