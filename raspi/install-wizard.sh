@@ -34,7 +34,7 @@ read_val() {
   if [ ! -z $2 ]; then
     local val
     read -p "$1 " val
-    eval "$2='${val}'"
+    eval "$2=\"$val\""
   fi
 }
 
