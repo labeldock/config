@@ -2,16 +2,12 @@
 
 main() {
   local SHOULD_PURGE
-  local SHOULD_SETUP_OPTIOONAL
+  local SHOULD_SETUP_OPTIONAL
   local SHOULD_SETUP_KIOSK
 
-  read_val "Should I purge to delete unnecessary packages? [y/n]" SHOULD_SETUP_OPTION
-  read_val "Install optional utils? [y/n]" SHOULD_SETUP_OPTION
+  read_val "Should I purge to delete unnecessary packages? [y/n]" SHOULD_PURGE
+  read_val "Install optional utils? [y/n]" SHOULD_SETUP_OPTIONAL
   read_val "Install chromium kiosk? [y/n]" SHOULD_SETUP_KIOSK
-  
-  echo "SHOULD_PURGE $SHOULD_PURGE"
-  echo "SHOULD_SETUP_OPTIOONAL $SHOULD_SETUP_OPTIOONAL"
-  echo "SHOULD_SETUP_KIOSK $SHOULD_SETUP_KIOSK"
 
   if [ "$SHOULD_PURGE" -eq "y" ]; then
     ./purge-apt.sh
@@ -21,7 +17,7 @@ main() {
   ./install-git-vim.sh
   ./install-nvm.sh
 
-  if [ "$SHOULD_SETUP_OPTION" -eq "y" ]; then
+  if [ "$SHOULD_SETUP_OPTIONAL" -eq "y" ]; then
     ./install-optional-utils.sh
   fi
   
