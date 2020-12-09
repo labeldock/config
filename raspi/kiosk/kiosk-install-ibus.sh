@@ -1,3 +1,3 @@
 #!/bin/sh
-sudo apt fonts-unfonts-core ibus ibus-hangul -y
+sudo apt install fonts-unfonts-core ibus ibus-hangul -y
 ibus engine hangul
