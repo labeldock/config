@@ -1,8 +1,8 @@
 main() {
   #local SHOULD_SETUP_CHROMIUM
   #read_val "Install chromium? [y/n]" SHOULD_SETUP_OPTION
-  ./kiosk-install-ibus
-  ./kiosk-install-chromium
+  ./kiosk-install-ibus.sh
+  ./kiosk-install-chromium.sh
 
   cp template/kiosk.sh ~/kiosk.sh
   echo "Copy ~/kiosk.sh"
