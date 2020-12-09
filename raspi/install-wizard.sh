@@ -9,7 +9,11 @@ main() {
   read_val "Install optional utils? [y/n]" SHOULD_SETUP_OPTION
   read_val "Install chromium kiosk? [y/n]" SHOULD_SETUP_KIOSK
   
-  if [ $SHOULD_PURGE -eq "y" ]; then
+  echo "SHOULD_PURGE $SHOULD_PURGE"
+  echo "SHOULD_SETUP_OPTIOONAL $SHOULD_SETUP_OPTIOONAL"
+  echo "SHOULD_SETUP_KIOSK $SHOULD_SETUP_KIOSK"
+
+  if [ "$SHOULD_PURGE" -eq "y" ]; then
     ./purge-apt.sh
   fi
 
@@ -17,11 +21,11 @@ main() {
   ./install-git-vim.sh
   ./install-nvm.sh
 
-  if [ $SHOULD_SETUP_OPTION -eq "y" ]; then
+  if [ "$SHOULD_SETUP_OPTION" -eq "y" ]; then
     ./install-optional-utils.sh
   fi
   
-  if [ $SHOULD_SETUP_KIOSK -eq "y" ]; then
+  if [ "$SHOULD_SETUP_KIOSK" -eq "y" ]; then
     ./kiosk/kiosk-wizard.sh
   fi
 }
