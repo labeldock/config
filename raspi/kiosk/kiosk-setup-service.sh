@@ -2,7 +2,7 @@
 main() {
   cp template/kiosk.sh ~/kiosk.sh
   echo "Copy ~/kiosk.sh"
-  cp template/kiosk.service /lib/systemd/system/kiosk.service
+  sudo cp template/kiosk.service /lib/systemd/system/kiosk.service
   echo "Copy /lib/systemd/system/kiosk.service"
 
   local ENABLE_RIGHT_NOW
