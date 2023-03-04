@@ -1,4 +1,5 @@
 # setting
+. ./helper.sh
 CONFIG_TEMPLATES_PATH="$HOME/config/dotfiles.templates"
 CONFIG_ACTIVE_PATH="$HOME/config/dotfiles.active"
 
@@ -78,6 +79,9 @@ configTmPropertiesSet(){
 
 function configunixfunctions {
   
+  echo "Please select"
+  call_nth
+
   echo -e "Your pwd => $PWD\nENTER COMMAND\ni!) setup or resetup \ngu) git user \ngc) git credential timeout\ntmp) local tm_properties \nvundle) install vim bundle from .vimrc \nrvm) rvm-setup \nnvm) nvm-setup \nnl) nvm install lts \nnpmi!)clean and install npm \nkp) Kill processor by port"
   read selected
 

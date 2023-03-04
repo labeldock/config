@@ -47,3 +47,17 @@ call_all() {
     "$arg"
   done
 }
+
+eval_keys() {
+  local -n map=$1
+  for key in $(echo "${!map[@]}" | tr ' ' '\n' | sort); do
+    echo "$key"
+  done
+}
+
+eval_values() {
+  local -n map=$1
+  for key in $(echo "${map[@]}" | tr ' ' '\n' | sort); do
+    echo "$key"
+  done
+}
