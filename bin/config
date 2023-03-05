@@ -1,0 +1,28 @@
+#!/bin/bash
+. ${BASH_SOURCE[0]%/*}/../lib/helper.sh
+. ${BASH_SOURCE[0]%/*}/../lib/configurator.sh
+
+
+todo (){
+  echo "todo"
+}
+
+exitConfig (){
+  echo "Bye bye"
+  exit 0
+}
+
+CHOICE_MENU=(
+  "Rice todo"
+  "Coke todo"
+  "Ice exitConfig"
+)
+
+
+MENU_NAMES=$(eval_nth 1 CHOICE_MENU[@])
+
+echo $MENU_NAMES
+#echo $MENU_FNS
+echo "Please enter the number of the desired item and press Enter."
+ask_nth CHOICE $(eval_keys CHOICE_MENU)
+
