@@ -1,9 +1,60 @@
 #!/bin/bash
+#imports 
 . ${BASH_SOURCE[0]%/*}/../lib/helper.sh
 . ${BASH_SOURCE[0]%/*}/../lib/configurator.sh
+#environments
+CONFIG_TEMPLATES_PATH="$(dirname "$(pwd)")/dotfiles.templates"
 
-todo (){
-  echo "todo"
+setup_gitconfig (){
+if [[ ! -f "$HOME/.gitconfig"  ]]; then
+    cp -r "$CONFIG_TEMPLATES_PATH/.gitconfig" "$HOME/.gitconfig"
+    echo "Generated  $HOME/.gitconfig"
+  else
+    echo "$HOME/.gitconfig file already exists. Skipping."
+  fi
+}
+
+setup_vundle (){
+  rm -rf "$CONFIG_TEMPLATES_PATH/.vim/bundle/Vundle.vim"
+  git clone https://github.com/VundleVim/Vundle.vim.git "$CONFIG_TEMPLATES_PATH/.vim/bundle/Vundle.vim/"
+  
+  sleep 2
+  if [[ ! -d "$HOME/.vim"  ]]; then
+    cp -r "$CONFIG_TEMPLATES_PATH/.vim" "$HOME/.vim" 
+    echo "Generated  $HOME/.vim"
+  else
+    echo "$HOME/.vim file already exists. Skipping."
+  fi
+  if [[ ! -f "$HOME/.vimrc" ]]; then
+    cp -r "$CONFIG_TEMPLATES_PATH/.vimrc" "$HOME/.vimrc" 
+    echo "Generated  $HOME/.vimrc"
+  else
+    echo "$HOME/.vimrc file already exists. Skipping."
+  fi
+  vim +PluginInstall +qall
+  echo "install complete vundle"
+}
+
+setup_tmux_config (){
+  if [[ ! -f "$HOME/.tmux.conf" ]]; then
+    cp -r "$CONFIG_TEMPLATES_PATH/.tmux.conf" "$HOME/.tmux.conf"
+    echo "Generated  $HOME/.tmux.conf"
+  else
+    echo "$HOME/.tmux.conf file already exists. Skipping."
+  fi
+  tmux source-file "$HOME/.tmux.conf"
+}
+
+input_git_user (){
+  local name
+  local email
+  echo "GIT user name"
+  read name
+  echo "GIT user email"
+  read email
+  git config user.name "$name"
+  git config user.email "$email"
+  git config --list | grep "user."
 }
 
 exitConfig (){
@@ -12,7 +63,10 @@ exitConfig (){
 }
 
 AVAILABLE_MENU=()
-AVAILABLE_MENU+=("todo todo")
+AVAILABLE_MENU+=("gitconfig setup_gitconfig")
+AVAILABLE_MENU+=("vundle setup_vundle")
+AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
+AVAILABLE_MENU+=("gituser input_git_user")
 AVAILABLE_MENU+=("exit exitConfig")
 
 MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
@@ -20,4 +74,4 @@ MENU_FNS=$(entries_to_words AVAILABLE_MENU[@] 2)
 
 echo "Please enter the number of the desired item and press Enter."
 ask_nth SELECT_INDEX ${MENU_NAMES}
-echo "$(read_nth ${SELECT_INDEX} ${MENU_FNS})"
+call_nth ${SELECT_INDEX} ${MENU_FNS}
