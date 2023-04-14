@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # setting
 . ./helper.sh
 CONFIG_TEMPLATES_PATH="$HOME/config/dotfiles.templates"

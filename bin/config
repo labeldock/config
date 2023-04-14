@@ -2,7 +2,6 @@
 . ${BASH_SOURCE[0]%/*}/../lib/helper.sh
 . ${BASH_SOURCE[0]%/*}/../lib/configurator.sh
 
-
 todo (){
   echo "todo"
 }
@@ -12,17 +11,13 @@ exitConfig (){
   exit 0
 }
 
-CHOICE_MENU=(
-  "Rice todo"
-  "Coke todo"
-  "Ice exitConfig"
-)
+AVAILABLE_MENU=()
+AVAILABLE_MENU+=("todo todo")
+AVAILABLE_MENU+=("exit exitConfig")
 
+MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
+MENU_FNS=$(entries_to_words AVAILABLE_MENU[@] 2)
 
-MENU_NAMES=$(eval_nth 1 CHOICE_MENU[@])
-
-echo $MENU_NAMES
-#echo $MENU_FNS
 echo "Please enter the number of the desired item and press Enter."
-ask_nth CHOICE $(eval_keys CHOICE_MENU)
-
+ask_nth SELECT_INDEX ${MENU_NAMES}
+echo "$(read_nth ${SELECT_INDEX} ${MENU_FNS})"
