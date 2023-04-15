@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# ask_nth CHOICE "RED" "BLUE"
-ask_nth () {
+# 'no' is a number. 'no' starts from 1, not from 0
+# 'words' are POSIX characters separated by spaces
+
+# ask_no_words CHOICE "RED" "BLUE"
+ask_no_words () {
   local var_name=$1
   shift
   local options=("$@")
@@ -25,8 +28,8 @@ ask_nth () {
   eval "$var_name=$choice"
 }
 
-# read_nth number ...CHOICES
-read_nth() {
+# read_no_words number ...CHOICES
+read_no_words() {
   local n=$1
   shift
   local string="$*"
@@ -37,8 +40,8 @@ read_nth() {
 }
 
 # exectue function
-# call_nth 1 ...FUNCTIONS
-call_nth() {
+# call_no_words 1 ...FUNCTIONS
+call_no_words() {
   local n="$1"
   shift
   local funcs=("$@")
@@ -101,15 +104,13 @@ eval_values() {
 # NULL NULL NULL
 
 entries_to_words () {
-  local entries=("${!1}")  # 첫 번째 인자로 받은 배열
-  local word_num=${2:-1}   # 두 번째 인자로 받은 단어 번호 (기본값: 1)
-
-  local result=()          # 추출된 단어를 저장할 배열
+  local entries=("${!1}")
+  local word_num=${2:-1}
+  local result=()
   for entry in "${entries[@]}"; do
-    local words=($entry)  # entry를 단어로 분리하여 배열로 저장
-    local word=${words[word_num-1]:-NULL}  # 지정된 단어 추출 (없으면 NULL)
-    result+=("$word")     # 추출된 단어를 결과 배열에 추가
+    local words=($entry)
+    local word=${words[word_num-1]:-NULL}
+    result+=("$word")
   done
   echo "${result[*]}"
 }
-
