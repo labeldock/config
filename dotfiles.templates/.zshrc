@@ -1,6 +1,3 @@
-# config
-[[ -s "$HOME/config/unix-init.sh" ]] && source "$HOME/config/unix-init.sh"
-
 # brew install zplug
 export ZPLUG_HOME=/usr/local/opt/zplug
 source $ZPLUG_HOME/init.zsh

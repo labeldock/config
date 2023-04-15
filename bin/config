@@ -2,11 +2,26 @@
 #imports 
 . ${BASH_SOURCE[0]%/*}/../lib/helper.sh
 . ${BASH_SOURCE[0]%/*}/../lib/configurator.sh
+
 #environments
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 DOTFILES_TEMPLATES_PATH="${SCRIPT_DIR}/../dotfiles.templates"
 DOTFILES_TEMPLATES_DIR=$(readlink -f "$DOTFILES_TEMPLATES_PATH")
 
+#menu
+AVAILABLE_MENU=()
+AVAILABLE_MENU+=("EXIT exit")
+AVAILABLE_MENU+=("gitconfig setup_gitconfig")
+AVAILABLE_MENU+=("zsh setup_zsh")
+AVAILABLE_MENU+=("vundle setup_vundle")
+AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
+AVAILABLE_MENU+=("zplug setup_zplug")
+AVAILABLE_MENU+=("rest_zshrc setup_init_zsh")
+AVAILABLE_MENU+=("gituser input_git_user")
+MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
+MENU_FNS=$(entries_to_words AVAILABLE_MENU[@] 2)
+
+#application
 setup_gitconfig (){
   if [[ ! -f "$HOME/.gitconfig"  ]]; then
     cp -r "$DOTFILES_TEMPLATES_DIR/.gitconfig" "$HOME/.gitconfig"
@@ -74,12 +89,14 @@ setup_zsh (){
     fi
   fi
 
-  chsh -s $(which zsh)
-  zsh
-  read -p "Do you want to install zplug? (y/n): " answer
+  read -p "Do you want to default zsh? (y/n): " answer
   if [ "$answer" == "y" ]; then
-    setup_zplug
+    chsh -s $(which zsh)
   fi
+  echo ""
+  echo "Do you want to install zplug? follow below command"
+  echo "zsh"
+  echo "config setup_zplug"
 }
 
 setup_zplug (){
@@ -131,19 +148,14 @@ exit (){
   echo ""
 }
 
-AVAILABLE_MENU=()
-AVAILABLE_MENU+=("EXIT exit")
-AVAILABLE_MENU+=("gitconfig setup_gitconfig")
-AVAILABLE_MENU+=("zsh setup_zsh")
-AVAILABLE_MENU+=("vundle setup_vundle")
-AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
-AVAILABLE_MENU+=("zplug setup_zplug")
-AVAILABLE_MENU+=("rest_zshrc setup_init_zsh")
-AVAILABLE_MENU+=("gituser input_git_user")
-
-MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
-MENU_FNS=$(entries_to_words AVAILABLE_MENU[@] 2)
-
-echo "Please enter the number of the desired item and press Enter."
-ask_no_words SELECT_INDEX ${MENU_NAMES}
-call_no_words ${SELECT_INDEX} ${MENU_FNS}
+main (){
+  if [[ $1 == "setup_zplug" ]]; then
+    
+  else
+    echo "Please enter the number of the desired item and press Enter."
+    ask_no_words SELECT_INDEX ${MENU_NAMES}
+    call_no_words ${SELECT_INDEX} ${MENU_FNS}
+  fi
+}
+  
+main "$@"
