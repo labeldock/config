@@ -71,7 +71,6 @@ setup_zsh (){
   echo ""
   echo "  [MacOS]"
   echo "  brew install zsh"
-  echo "  brew install zsh"
   echo ""
   echo "  [Debian]"
   echo "  sudo apt update && sudo apt install zsh -y"
@@ -79,7 +78,7 @@ setup_zsh (){
   echo "  And..."
   echo "  chsh -s \$(which zsh)"
   echo "  zsh"
-  echo "  config setup_zplug"
+  echo "  config install_zplug"
   echo ""
 }
 
@@ -133,13 +132,16 @@ exit (){
 }
 
 main (){
-  if [[ $1 == "setup_zplug" ]]; then
-
-  else
-    echo "Please enter the number of the desired item and press Enter."
-    ask_no_words SELECT_INDEX ${MENU_NAMES}
-    call_no_words ${SELECT_INDEX} ${MENU_FNS}
-  fi
+  case "$1" in
+    install_zplug)
+      setup_zplug
+      ;;
+    *)
+      echo "Please enter the number of the desired item and press Enter."
+      ask_no_words SELECT_INDEX ${MENU_NAMES}
+      call_no_words ${SELECT_INDEX} ${MENU_FNS}
+    ;;
+  esac
 }
   
 main "$@"
