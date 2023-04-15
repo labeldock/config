@@ -54,12 +54,12 @@ setup_ohmyzsh (){
   if [[ $SHELL != *"zsh"* ]]; then
     echo "'zsh' is not the default shell. Please install zsh"
     exit 1
-  else 
+  fi 
   if [ -d "$HOME/.oh-my-zsh" ]; then
     echo "oh-my-zsh is already installed."
-    exit 0
+  else
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
   fi
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 }
 
 input_git_user (){
@@ -78,7 +78,6 @@ exit (){
   echo ""
   echo "You have chosen to exit"
   echo ""
-  exit 0
 }
 
 AVAILABLE_MENU=()

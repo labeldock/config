@@ -1,8 +1,7 @@
 #!/bin/bash
-
 SHELL_CONFIGURATION=
 FLAG_CONFIGURATION="#~/config/bin:path:flag"
-PATH_CONFIGURATION='[ -d "$HOME/config/bin" ] && PATH="$HOME/config/bin:$PATH" '$FLAG_CONFIGURATION
+PATH_CONFIGURATION="[ -d \"$PWD/bin\" ] && PATH=\"$PWD/bin:\$PATH\" "$FLAG_CONFIGURATION
 
 echo "Checking shell environment..."
 if echo $SHELL | grep -q "zsh"; then
