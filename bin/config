@@ -3,11 +3,13 @@
 . ${BASH_SOURCE[0]%/*}/../lib/helper.sh
 . ${BASH_SOURCE[0]%/*}/../lib/configurator.sh
 #environments
-CONFIG_TEMPLATES_PATH="$(dirname "$(pwd)")/dotfiles.templates"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+DOTFILES_TEMPLATES_PATH="${SCRIPT_DIR}/../dotfiles.templates"
+DOTFILES_TEMPLATES_DIR=$(readlink -f "$DOTFILES_TEMPLATES_PATH")
 
 setup_gitconfig (){
   if [[ ! -f "$HOME/.gitconfig"  ]]; then
-    cp -r "$CONFIG_TEMPLATES_PATH/.gitconfig" "$HOME/.gitconfig"
+    cp -r "$DOTFILES_TEMPLATES_DIR/.gitconfig" "$HOME/.gitconfig"
     echo "Generated  $HOME/.gitconfig"
   else
     if grep -q "\[alias\]" "$HOME/.gitconfig"; then
@@ -15,23 +17,22 @@ setup_gitconfig (){
     else
       echo "The [alias] string does not exist in the $HOME/.gitconfig file."
     fi
-    
   fi
 }
 
 setup_vundle (){
-  rm -rf "$CONFIG_TEMPLATES_PATH/.vim/bundle/Vundle.vim"
-  git clone https://github.com/VundleVim/Vundle.vim.git "$CONFIG_TEMPLATES_PATH/.vim/bundle/Vundle.vim/"
+  rm -rf "$DOTFILES_TEMPLATES_DIR/.vim/bundle/Vundle.vim"
+  git clone https://github.com/VundleVim/Vundle.vim.git "$DOTFILES_TEMPLATES_DIR/.vim/bundle/Vundle.vim/"
   
   sleep 2
   if [[ ! -d "$HOME/.vim"  ]]; then
-    cp -r "$CONFIG_TEMPLATES_PATH/.vim" "$HOME/.vim" 
+    cp -r "$DOTFILES_TEMPLATES_DIR/.vim" "$HOME/.vim" 
     echo "Generated  $HOME/.vim"
   else
     echo "$HOME/.vim file already exists. Skipping."
   fi
   if [[ ! -f "$HOME/.vimrc" ]]; then
-    cp -r "$CONFIG_TEMPLATES_PATH/.vimrc" "$HOME/.vimrc" 
+    cp -r "$DOTFILES_TEMPLATES_DIR/.vimrc" "$HOME/.vimrc" 
     echo "Generated  $HOME/.vimrc"
   else
     echo "$HOME/.vimrc file already exists. Skipping."
@@ -42,7 +43,7 @@ setup_vundle (){
 
 setup_tmux_config (){
   if [[ ! -f "$HOME/.tmux.conf" ]]; then
-    cp -r "$CONFIG_TEMPLATES_PATH/.tmux.conf" "$HOME/.tmux.conf"
+    cp -r "$DOTFILES_TEMPLATES_DIR/.tmux.conf" "$HOME/.tmux.conf"
     echo "Generated  $HOME/.tmux.conf"
   else
     echo "$HOME/.tmux.conf file already exists. Skipping."
