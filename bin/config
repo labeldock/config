@@ -51,16 +51,16 @@ setup_tmux_config (){
   tmux source-file "$HOME/.tmux.conf"
 }
 
-setup_zplug (){
+setup_zsh (){
   # Check if zsh is already installed
   if ! [ -x "$(command -v zsh)" ]; then
-    echo 'zsh is not installed. Installing zsh...' >&2
+    echo 'zsh is not installed. Installing zsh...'
     
     # Install zsh on macOS
     if [ "$(uname)" == "Darwin" ]; then
       # Check if Homebrew is installed
       if ! [ -x "$(command -v brew)" ]; then
-          echo 'Homebrew is not installed. Installing Homebrew...' >&2
+          echo 'Homebrew is not installed. Installing Homebrew...'
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       fi
       
@@ -74,12 +74,20 @@ setup_zplug (){
     fi
   fi
 
+  chsh -s $(which zsh)
+  zsh
+  read -p "Do you want to install zplug? (y/n): " answer
+  if [ "$answer" == "y" ]; then
+    setup_zplug
+  fi
+}
+
+setup_zplug (){
   # Install zplug
   if ! [ -d ~/.zplug ]; then
     echo 'zplug is not installed. Installing zplug...'
     curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
   fi
-
   setup_init_zsh
 }
 
@@ -102,6 +110,7 @@ setup_init_zsh (){
 setup_init_zsh_step2 (){
   cp "$DOTFILES_TEMPLATES_DIR/.zshrc" "$HOME/.zshrc" 
   echo "Generated  $HOME/.vim"
+  zsh
 }
 
 input_git_user (){
@@ -125,10 +134,11 @@ exit (){
 AVAILABLE_MENU=()
 AVAILABLE_MENU+=("EXIT exit")
 AVAILABLE_MENU+=("gitconfig setup_gitconfig")
-AVAILABLE_MENU+=("zsh_zplug setup_zplug")
-AVAILABLE_MENU+=("rest_zshrc setup_init_zsh")
+AVAILABLE_MENU+=("zsh setup_zsh")
 AVAILABLE_MENU+=("vundle setup_vundle")
 AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
+AVAILABLE_MENU+=("zplug setup_zplug")
+AVAILABLE_MENU+=("rest_zshrc setup_init_zsh")
 AVAILABLE_MENU+=("gituser input_git_user")
 
 MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
