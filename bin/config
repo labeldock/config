@@ -105,6 +105,7 @@ setup_zplug (){
   else
     echo 'zplug is installed. Skipping.'
   fi
+  sleep 1
   setup_init_zsh
 }
 
@@ -115,9 +116,19 @@ setup_init_zsh (){
     echo "  Please install [ zsh ] on the system and proceed."
     echo ""
     exit 1
+  else
+    echo '[ zsh ] has been confirmed as installed.'
   fi
 
-  echo 'Setup in ~/.zshrc for zplug'
+  if ! [ -d ~/.zplug ]; then
+    echo ""
+    echo "  This script requires zsh."
+    echo "  Please install [ zplug ] on the system and proceed."
+    echo ""
+    exit 1
+  else
+    echo '[ zplug ] has been confirmed as installed.'
+  fi
   
   SHELL_CONFIGURATION="$HOME/.zshrc"
   ZPLUG_CONFIGURATION="$HOME/.zshrc.zplug.conf"
