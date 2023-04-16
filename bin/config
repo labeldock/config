@@ -1,0 +1,204 @@
+#!/bin/bash
+
+#imports 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. "$SCRIPT_DIR/../lib/helper.sh"
+
+DOTFILES_TEMPLATES_PATH="${SCRIPT_DIR}/../dotfiles.templates"
+DOTFILES_TEMPLATES_DIR=$(readlink -f "$DOTFILES_TEMPLATES_PATH")
+
+#menu
+AVAILABLE_MENU=()
+AVAILABLE_MENU+=("EXIT exit_script")
+AVAILABLE_MENU+=("gitconfig setup_gitconfig")
+AVAILABLE_MENU+=("zsh setup_zsh")
+AVAILABLE_MENU+=("zsh_zplug setup_zplug")
+AVAILABLE_MENU+=("vundle setup_vundle")
+AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
+AVAILABLE_MENU+=("reset_.zshrc.zplug.config setup_init_zsh")
+AVAILABLE_MENU+=("gituser input_git_user")
+echo "curr @@$CURRENT_SHELL@@"
+if [ "$CURRENT_SHELL" = "zsh" ]; then
+  MENU_NAMES=$(entries_to_words AVAILABLE_MENU 1)
+  MENU_FNS=$(entries_to_words AVAILABLE_MENU 2)
+else
+  MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
+  MENU_FNS=$(entries_to_words AVAILABLE_MENU[@] 2)
+fi
+
+
+#application
+setup_gitconfig (){
+  if [[ ! -f "$HOME/.gitconfig"  ]]; then
+    cp -r "$DOTFILES_TEMPLATES_DIR/.gitconfig" "$HOME/.gitconfig"
+    echo "Generated  $HOME/.gitconfig"
+  else
+    if grep -q "\[alias\]" "$HOME/.gitconfig"; then
+      echo "$HOME/.gitconfig file already exists. Skipping."
+    else
+      echo "The [alias] string does not exist in the $HOME/.gitconfig file."
+    fi
+  fi
+}
+
+setup_vundle (){
+  rm -rf "$DOTFILES_TEMPLATES_DIR/.vim/bundle/Vundle.vim"
+  git clone https://github.com/VundleVim/Vundle.vim.git "$DOTFILES_TEMPLATES_DIR/.vim/bundle/Vundle.vim/"
+  
+  sleep 2
+  if [[ ! -d "$HOME/.vim"  ]]; then
+    cp -r "$DOTFILES_TEMPLATES_DIR/.vim" "$HOME/.vim" 
+    echo "Generated  $HOME/.vim"
+  else
+    echo "$HOME/.vim file already exists. Skipping."
+  fi
+  if [[ ! -f "$HOME/.vimrc" ]]; then
+    cp -r "$DOTFILES_TEMPLATES_DIR/.vimrc" "$HOME/.vimrc" 
+    echo "Generated  $HOME/.vimrc"
+  else
+    echo "$HOME/.vimrc file already exists. Skipping."
+  fi
+  vim +PluginInstall +qall
+  echo "install complete vundle"
+}
+
+setup_tmux_config (){
+  if [[ ! -f "$HOME/.tmux.conf" ]]; then
+    cp -r "$DOTFILES_TEMPLATES_DIR/.tmux.conf" "$HOME/.tmux.conf"
+    echo "Generated  $HOME/.tmux.conf"
+  else
+    echo "$HOME/.tmux.conf file already exists. Skipping."
+  fi
+  tmux source-file "$HOME/.tmux.conf"
+}
+
+setup_zsh (){
+  echo "Sorry, cannot assist with installing zsh. Please install it manually"
+  echo ""
+  echo "  [MacOS]"
+  echo "  brew install zsh"
+  echo ""
+  echo "  [Debian]"
+  echo "  sudo apt update && sudo apt install zsh -y"
+  echo ""
+  echo "  And..."
+  echo "  chsh -s \$(which zsh)"
+  echo "  zsh"
+  echo "  config install_zplug"
+  echo ""
+}
+
+setup_zplug (){
+  
+  if [ ! -x /bin/zsh ]; then
+    echo ""
+    echo "  This script requires zsh."
+    echo "  Please install [ zsh ] on the system and proceed."
+    echo ""
+    exit 1
+  fi
+
+  # Install zplug
+  if ! [ -d ~/.zplug ]; then
+    echo 'zplug is not installed. Installing zplug...'
+    curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
+  else
+    echo 'zplug is installed. Skipping.'
+  fi
+  sleep 1
+  setup_init_zsh
+}
+
+setup_init_zsh (){
+  if [ ! -x /bin/zsh ]; then
+    echo ""
+    echo "  This script requires zsh."
+    echo "  Please install [ zsh ] on the system and proceed."
+    echo ""
+    exit 1
+  else
+    echo '[ zsh ] has been confirmed as installed.'
+  fi
+
+  if ! [ -d ~/.zplug ]; then
+    echo ""
+    echo "  This script requires zsh."
+    echo "  Please install [ zplug ] on the system and proceed."
+    echo ""
+    exit 1
+  else
+    echo '[ zplug ] has been confirmed as installed.'
+  fi
+  
+  SHELL_CONFIGURATION="$HOME/.zshrc"
+  ZPLUG_CONFIGURATION="$HOME/.zshrc.zplug.conf"
+  FLAG_CONFIGURATION="#~/config/bin:zplug:flag"
+  PATH_CONFIGURATION=". ${ZPLUG_CONFIGURATION} "$FLAG_CONFIGURATION
+
+  #
+  if [[ ! -f "$HOME/.zshrc" ]]; then
+    touch "$HOME/.zshrc"
+  fi
+
+  if [[ -f "$ZPLUG_CONFIGURATION" ]]; then
+    read -p "Do you want to remove the existing $ZPLUG_CONFIGURATION file and create a new one? (y/n): " SHOULD_CREATE_ZPLUG_CONF
+  else
+    SHOULD_CREATE_ZPLUG_CONF=y
+  fi
+  case $SHOULD_CREATE_ZPLUG_CONF in
+    [Yy]* ) 
+      cp "$DOTFILES_TEMPLATES_DIR/.zshrc.zplug.conf" "$ZPLUG_CONFIGURATION"
+      echo "Created $ZPLUG_CONFIGURATION"
+      ;;
+    * ) ;;
+  esac
+  
+
+  if grep -q "$FLAG_CONFIGURATION" $SHELL_CONFIGURATION; then
+    existing_line=$(grep "$FLAG_CONFIGURATION" $SHELL_CONFIGURATION)
+    if [ "$existing_line" != "$PATH_CONFIGURATION" ]; then 
+      echo "Replacing existing line with PATH_CONFIGURATION..."
+      awk -v existing="$existing_line" -v target="$PATH_CONFIGURATION" '{ if ($0 == existing) { $0=target } print }' $SHELL_CONFIGURATION > temp && mv temp $SHELL_CONFIGURATION
+    else
+      echo "Great job! It looks like the installation is already completed."
+    fi
+  else
+    echo "Appending PATH_CONFIGURATION to $SHELL_CONFIGURATION..."
+    echo "$PATH_CONFIGURATION" >> $SHELL_CONFIGURATION
+  fi
+
+  /bin/zsh
+}
+
+input_git_user (){
+  local name
+  local email
+  echo "GIT user name"
+  read name
+  echo "GIT user email"
+  read email
+  git config user.name "$name"
+  git config user.email "$email"
+  git config --list | grep "user."
+}
+
+exit_script (){
+  echo ""
+  echo "You have chosen to exit"
+  echo ""
+}
+
+main (){
+  case "$1" in
+    install_zplug)
+      setup_zplug
+      ;;
+    *)
+      echo "Please enter the number of the desired item and press Enter."
+      ask_no_words SELECT_INDEX ${MENU_NAMES}
+      call_no_words ${SELECT_INDEX} ${MENU_FNS}
+    ;;
+  esac
+}
+  
+main "$@"

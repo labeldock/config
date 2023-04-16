@@ -2,10 +2,10 @@
 . ../helper.sh
 
 echo "What's your favorite color?"
-ask_nth CHOICE "RED" "GREEN" "BLUE"
+ask_no_words CHOICE "RED" "GREEN" "BLUE"
 echo "You chose ${CHOICE}"
 
-ask_nth CHOICE 11 12 123
+ask_no_words CHOICE 11 12 123
 echo "You chose ${CHOICE}"
 
 installAll (){
@@ -21,5 +21,5 @@ installHtop (){
 echo "What would you like to install?"
 
 INSTALLS="all tmux htop"
-ask_nth CHOICE $INSTALLS
-call_nth CHOICE installAll installTmux installHtop
+ask_no_words CHOICE $INSTALLS
+call_no_words CHOICE installAll installTmux installHtop
