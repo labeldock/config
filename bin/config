@@ -1,25 +1,31 @@
 #!/bin/bash
-#imports 
-. ${BASH_SOURCE[0]%/*}/../lib/helper.sh
-. ${BASH_SOURCE[0]%/*}/../lib/configurator.sh
 
-#environments
+#imports 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. "$SCRIPT_DIR/../lib/helper.sh"
+
 DOTFILES_TEMPLATES_PATH="${SCRIPT_DIR}/../dotfiles.templates"
 DOTFILES_TEMPLATES_DIR=$(readlink -f "$DOTFILES_TEMPLATES_PATH")
 
 #menu
 AVAILABLE_MENU=()
-AVAILABLE_MENU+=("EXIT exit")
+AVAILABLE_MENU+=("EXIT exit_script")
 AVAILABLE_MENU+=("gitconfig setup_gitconfig")
 AVAILABLE_MENU+=("zsh setup_zsh")
+AVAILABLE_MENU+=("zsh_zplug setup_zplug")
 AVAILABLE_MENU+=("vundle setup_vundle")
 AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
-AVAILABLE_MENU+=("zplug setup_zplug")
-AVAILABLE_MENU+=("rest_zshrc setup_init_zsh")
+AVAILABLE_MENU+=("reset_.zshrc.zplug.config setup_init_zsh")
 AVAILABLE_MENU+=("gituser input_git_user")
-MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
-MENU_FNS=$(entries_to_words AVAILABLE_MENU[@] 2)
+echo "curr @@$CURRENT_SHELL@@"
+if [ "$CURRENT_SHELL" = "zsh" ]; then
+  MENU_NAMES=$(entries_to_words AVAILABLE_MENU 1)
+  MENU_FNS=$(entries_to_words AVAILABLE_MENU 2)
+else
+  MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
+  MENU_FNS=$(entries_to_words AVAILABLE_MENU[@] 2)
+fi
+
 
 #application
 setup_gitconfig (){
@@ -83,34 +89,74 @@ setup_zsh (){
 }
 
 setup_zplug (){
+  
+  if [ ! -x /bin/zsh ]; then
+    echo ""
+    echo "  This script requires zsh."
+    echo "  Please install [ zsh ] on the system and proceed."
+    echo ""
+    exit 1
+  fi
+
   # Install zplug
   if ! [ -d ~/.zplug ]; then
     echo 'zplug is not installed. Installing zplug...'
     curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
+  else
+    echo 'zplug is installed. Skipping.'
   fi
   setup_init_zsh
 }
 
 setup_init_zsh (){
-  if [[ -f "$HOME/.zshrc" ]]; then
-    read -p "Do you want to remove the existing .zshrc file and create a new one? (y/n): " answer
+  if [ ! -x /bin/zsh ]; then
+    echo ""
+    echo "  This script requires zsh."
+    echo "  Please install [ zsh ] on the system and proceed."
+    echo ""
+    exit 1
+  fi
 
-    if [ "$answer" == "y" ]; then
-      echo 'Removing the existing .zshrc file...'
-      rm ~/.zshrc
-      # Remove the existing .zshrc file
-      echo 'Creating a new .zshrc file...'
-      setup_init_zsh_step2
+  echo 'Setup in ~/.zshrc for zplug'
+  
+  SHELL_CONFIGURATION="$HOME/.zshrc"
+  ZPLUG_CONFIGURATION="$HOME/.zshrc.zplug.conf"
+  FLAG_CONFIGURATION="#~/config/bin:zplug:flag"
+  PATH_CONFIGURATION=". ${ZPLUG_CONFIGURATION} "$FLAG_CONFIGURATION
+
+  #
+  if [[ ! -f "$HOME/.zshrc" ]]; then
+    touch "$HOME/.zshrc"
+  fi
+
+  if [[ -f "$ZPLUG_CONFIGURATION" ]]; then
+    read -p "Do you want to remove the existing $ZPLUG_CONFIGURATION file and create a new one? (y/n): " SHOULD_CREATE_ZPLUG_CONF
+  else
+    SHOULD_CREATE_ZPLUG_CONF=y
+  fi
+  case $SHOULD_CREATE_ZPLUG_CONF in
+    [Yy]* ) 
+      cp "$DOTFILES_TEMPLATES_DIR/.zshrc.zplug.conf" "$ZPLUG_CONFIGURATION"
+      echo "Created $ZPLUG_CONFIGURATION"
+      ;;
+    * ) ;;
+  esac
+  
+
+  if grep -q "$FLAG_CONFIGURATION" $SHELL_CONFIGURATION; then
+    existing_line=$(grep "$FLAG_CONFIGURATION" $SHELL_CONFIGURATION)
+    if [ "$existing_line" != "$PATH_CONFIGURATION" ]; then 
+      echo "Replacing existing line with PATH_CONFIGURATION..."
+      awk -v existing="$existing_line" -v target="$PATH_CONFIGURATION" '{ if ($0 == existing) { $0=target } print }' $SHELL_CONFIGURATION > temp && mv temp $SHELL_CONFIGURATION
+    else
+      echo "Great job! It looks like the installation is already completed."
     fi
   else
-    setup_init_zsh_step2
+    echo "Appending PATH_CONFIGURATION to $SHELL_CONFIGURATION..."
+    echo "$PATH_CONFIGURATION" >> $SHELL_CONFIGURATION
   fi
-}
 
-setup_init_zsh_step2 (){
-  cp "$DOTFILES_TEMPLATES_DIR/.zshrc" "$HOME/.zshrc" 
-  echo "Generated  $HOME/.vim"
-  zsh
+  /bin/zsh
 }
 
 input_git_user (){
@@ -125,7 +171,7 @@ input_git_user (){
   git config --list | grep "user."
 }
 
-exit (){
+exit_script (){
   echo ""
   echo "You have chosen to exit"
   echo ""

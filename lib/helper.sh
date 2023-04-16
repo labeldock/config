@@ -15,7 +15,8 @@ ask_no_words () {
   done
   
   while true; do
-    read -p "Enter your choice: " choice
+    echo "Enter your choice: "
+    read choice
     for i in $(seq 1 $num_options); do
       if [[ "$choice" == "$i" || "$choice" == "${options[$i-1]}" ]]; then
         choice=$i
@@ -55,9 +56,9 @@ call_no_words() {
   if [[ "$(type -t "$func")" != "function" ]]; then
     echo "[$func] is not an executable function"
     exit 1
+  else
+    "$func"
   fi
-  
-  "$func"
 }
 
 call_all() {

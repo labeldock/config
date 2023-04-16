@@ -1,15 +1,22 @@
 #!/bin/bash
 
 main (){
+  if [ -n "$ZSH_VERSION" ]; then
+    CURRENT_SHELL="zsh"
+  elif [ -n "$BASH_VERSION" ]; then
+    CURRENT_SHELL="bash"
+  else
+    CURRENT_SHELL="sh"
+  fi
   SHELL_CONFIGURATION=
   FLAG_CONFIGURATION="#~/config/bin:path:flag"
   PATH_CONFIGURATION="[ -d \"$PWD/bin\" ] && PATH=\"$PWD/bin:\$PATH\" "$FLAG_CONFIGURATION
 
   echo "Checking shell environment..."
-  if echo $SHELL | grep -q "zsh"; then
+  if [[ "$CURRENT_SHELL" == "zsh" ]]; then
     echo "Detected zsh shell. Using ~/.zshrc for configuration."
     SHELL_CONFIGURATION=~/.zshrc
-  elif echo $SHELL | grep -q "bash"; then
+  elif [[ "$CURRENT_SHELL" == "bash" ]]; then
     echo "Detected bash shell. Using ~/.bashrc for configuration."
     SHELL_CONFIGURATION=~/.bashrc
   else
