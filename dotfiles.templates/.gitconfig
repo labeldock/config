@@ -19,6 +19,11 @@
     aa = add --all
     ai = add --interactive
     ap = add --patch
+    lf = lfs status
+    lfls = lfs ls-files
+    lfla = lfs track --all
+    lfa = lfs track
+    lfd = lfs untrack
     cm  = commit -m
     cma = commit --amend
     cmau = commit --amend --reset-author
