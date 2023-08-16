@@ -132,7 +132,6 @@ setup_init_zsh (){
   
   SHELL_CONFIGURATION="$HOME/.zshrc"
   ZPLUG_CONFIGURATION="$HOME/.zshrc.zplug.conf"
-  P10K_CONFIGURATION="$HOME/.p10k.zsh"
   FLAG_CONFIGURATION="#~/config/bin:zplug:flag"
   PATH_CONFIGURATION="[ -f \"${ZPLUG_CONFIGURATION}\" ] && . ${ZPLUG_CONFIGURATION} "$FLAG_CONFIGURATION
 
@@ -149,19 +148,6 @@ setup_init_zsh (){
   case $SHOULD_CREATE_ZPLUG_CONF in
     [Yy]* ) 
       cp "$DOTFILES_TEMPLATES_DIR/.zshrc.zplug.conf" "$ZPLUG_CONFIGURATION"
-      echo "Created $ZPLUG_CONFIGURATION"
-      ;;
-    * ) ;;
-  esac
-
-  read -p "Would you like to use the recommended super simple p10k theme? (y/n): " SHOULD_CREATE_P10K_CONF
-  case $SHOULD_CREATE_P10K_CONF in
-    [Yy]* )
-      if [[ -f "$P10K_CONFIGURATION" ]]; then
-        rm $P10K_CONFIGURATION
-      fi
-      cp "$DOTFILES_TEMPLATES_DIR/.p10k.zsh" "$P10K_CONFIGURATION"
-      sleep 1
       echo "Created $ZPLUG_CONFIGURATION"
       ;;
     * ) ;;
