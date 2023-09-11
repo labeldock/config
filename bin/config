@@ -10,13 +10,12 @@ DOTFILES_TEMPLATES_DIR=$(readlink -f "$DOTFILES_TEMPLATES_PATH")
 #menu
 AVAILABLE_MENU=()
 AVAILABLE_MENU+=("EXIT exit_script")
-AVAILABLE_MENU+=("gitconfig setup_gitconfig")
-AVAILABLE_MENU+=("zsh setup_zsh")
 AVAILABLE_MENU+=("zsh_zplug setup_zplug")
-AVAILABLE_MENU+=("vundle setup_vundle")
-AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
-AVAILABLE_MENU+=("reset_.zshrc.zplug.config setup_init_zsh")
+AVAILABLE_MENU+=("gitconfig setup_gitconfig")
 AVAILABLE_MENU+=("gituser input_git_user")
+AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
+AVAILABLE_MENU+=("vundle setup_vundle")
+AVAILABLE_MENU+=("reset_.zshrc.zplug.config setup_init_zsh")
 echo "curr @@$CURRENT_SHELL@@"
 if [ "$CURRENT_SHELL" = "zsh" ]; then
   MENU_NAMES=$(entries_to_words AVAILABLE_MENU 1)
@@ -72,28 +71,23 @@ setup_tmux_config (){
   tmux source-file "$HOME/.tmux.conf"
 }
 
-setup_zsh (){
-  echo "Sorry, cannot assist with installing zsh. Please install it manually"
-  echo ""
-  echo "  [MacOS]"
-  echo "  brew install zsh"
-  echo ""
-  echo "  [Debian]"
-  echo "  sudo apt update && sudo apt install zsh -y"
-  echo ""
-  echo "  And..."
-  echo "  chsh -s \$(which zsh)"
-  echo "  zsh"
-  echo "  config install_zplug"
-  echo ""
-}
-
 setup_zplug (){
   
   if [ ! -x /bin/zsh ]; then
     echo ""
     echo "  This script requires zsh."
     echo "  Please install [ zsh ] on the system and proceed."
+    echo ""
+    echo "  [MacOS]"
+    echo "  brew install zsh"
+    echo ""
+    echo "  [Debian]"
+    echo "  sudo apt update && sudo apt install zsh -y"
+    echo ""
+    echo "  And..."
+    echo "  chsh -s \$(which zsh)"
+    echo "  zsh"
+    echo "  config install_zplug"
     echo ""
     exit 1
   fi
