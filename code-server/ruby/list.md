@@ -1,0 +1,14 @@
+- [Ruby](https://marketplace.visualstudio.com/items?itemName=shopify.ruby-extensions-pack)
+- [endwise](https://marketplace.visualstudio.com/items?itemName=kaiwood.endwise)
+- [Rails DB Scheme](https://marketplace.visualstudio.com/items?itemName=aki77.rails-db-schema)
+- [html-erb]https://marketplace.visualstudio.com/items?itemName=aki77.html-erb)
+- [erb](https://marketplace.visualstudio.com/items?itemName=CraigMaslowski.erb)
+- [ERB-VSCode-Snippets](https://marketplace.visualstudio.com/items?itemName=ZneuRay.erb-vscode-snippets)
+  - Shorcuts
+    - er
+    - pe
+    - pc
+- [Quick Open Rails](https://marketplace.visualstudio.com/items?itemName=aki77.quick-open-rails)
+  - Alt + A
+- [Rails Fast Nav](https://marketplace.visualstudio.com/items?itemName=jemmyw.rails-fast-nav)
+  - Alt + R
