@@ -1,0 +1,14 @@
+# Fonts
+font-family = JetBrainsMono Nerd Font
+font-family = D2Coding
+font-size = 14
+
+# Slight background transparency (subtle see-through for a calm feel)
+background-opacity = 0.96
+
+# Window padding
+window-padding-x = 10
+window-padding-y = 10
+
+# Cursor
+cursor-style = block

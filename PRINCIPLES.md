@@ -29,14 +29,28 @@ Git Bash는 best-effort 수준으로만 지원합니다. 특수 파일/설정이
 1. **수동 사용** — 사용자가 레포를 클론하거나 GitHub 웹에서 파일을 직접 열어보고, 원하는 dotfile(예: `dotfiles.templates/.gitconfig`)을 자기 환경에 직접 복사/참조합니다.
 2. **자동 적용** — `~/config/onboard` 를 실행하면 메뉴를 통해 템플릿 복사/설치가 자동으로 이루어집니다.
 
-따라서 `dotfiles.templates/` 하위 파일들은 **사람이 직접 읽고 복사할 수 있는 형태**로 유지해야 합니다. 주석, 자기완결성, 읽기 쉬운 구조가 중요하며, 스크립트 전용 placeholder/변수 주입 같은 것은 지양합니다. `onboard` 는 이 템플릿들 위의 편의 레이어일 뿐, 템플릿이 single source of truth 입니다.
+따라서 템플릿 파일들은 **사람이 직접 읽고 복사할 수 있는 형태**로 유지해야 합니다. 주석, 자기완결성, 읽기 쉬운 구조가 중요하며, 스크립트 전용 placeholder/변수 주입 같은 것은 지양합니다. `onboard` 는 이 템플릿들 위의 편의 레이어일 뿐, 템플릿이 single source of truth 입니다.
+
+### 템플릿 디렉토리 구분
+
+배치 대상에 따라 두 디렉토리로 분리합니다. 이 구분은 단순 네이밍이 아니라 "복사 대상 경로" 를 명확히 드러내기 위함이며, 수동 복사 사용자가 어디에 넣어야 할지 즉시 알 수 있게 합니다.
+
+| 디렉토리 | 대상 경로 | 예시 |
+| --- | --- | --- |
+| `dotfiles.templates/` | `$HOME/...` (홈 디렉토리 직접) | `.gitconfig`, `.tmux.conf`, `.nanorc` |
+| `xdg_config.templates/` | `$HOME/.config/...` (XDG_CONFIG_HOME 하위) | `opencode/opencode-*.json` |
 
 ## 온보딩 스크립트 방향
 
 - **런타임**: bash 유지. `@clack/prompts` 같은 외부 런타임은 도입하지 않습니다. 현재 범위에서는 bash가 충분합니다.
 - **진입점**: 레포 루트의 `onboard` 실행파일 하나. (`~/config/onboard` 직접 실행; Rails 의 `bin/rails` 스타일). 별도의 PATH 등록/쉘 재시작 없이 바로 동작합니다.
 - **UI**: 방향키로 이동, Space 로 토글, Enter 로 완료, Esc/q 로 취소. `lib/ui.sh` 가 공용 헬퍼(`ui_menu`, `ui_multiselect`) 를 제공합니다. bash 3.2 (macOS 기본) 호환을 위해 `stty` 로 ESC 시퀀스를 감지합니다.
-- **메뉴 구조**: `Recommend` (brew + mise + global tools) / `Brew 설치` / `Mise 설치` / `gitconfig 적용` / `git user 설정` / `tmux.conf 적용` / `Exit`. 이미 설치된 항목은 `(installed)` 로 표기됩니다.
+- **메뉴 구조**: 최상위는 `install` / `config` / `ai-config` / `Exit` 의 3-tier 구조입니다.
+  - `install` → `Recommend` (brew + mise + global tools) / `Brew 설치` / `Mise 설치`
+  - `config` → `gitconfig` / `nanorc` / `tmux` / `ghostty` / `tm_properties`
+  - `ai-config` → `opencode` / `claude`
+  - 서브메뉴 하단의 `← back` 또는 Esc 로 상위로 복귀합니다. 이미 설치된 항목은 `(installed)` 로 표기됩니다.
+- **rc 통합 방식**: AI 관련 alias 는 각 템플릿 파일을 그대로 두고, `.bashrc`/`.zshrc` 에 `[ -f <template> ] && . <template>` 한 줄을 추가하는 source 방식입니다. 템플릿을 수정하면 즉시 반영되며, 같은 내용을 복제하지 않습니다. 멱등성은 `#~/config:<tag>:source` 마커로 유지합니다.
 
 ## 시스템 기본 설치 대상
 

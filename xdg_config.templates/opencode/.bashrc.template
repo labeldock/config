@@ -1,0 +1,2 @@
+alias openglm='OPENCODE_CONFIG="$HOME/.config/opencode/opencode-ollama-glm.json" opencode'
+alias opengpt='OPENCODE_CONFIG="$HOME/.config/opencode/opencode-openai-gpt.json" opencode'

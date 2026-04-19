@@ -8,6 +8,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 . "$SCRIPT_DIR/lib/onboard.sh"
 
 DOTFILES_DIR="$SCRIPT_DIR/dotfiles.templates"
+XDG_DIR="$SCRIPT_DIR/xdg_config.templates"
 
 MISE_TOOLS=(
   jq
@@ -26,6 +27,40 @@ ob__extend_path
 pause() {
   printf '\n%s[Enter 로 계속]%s ' "$UI_DIM" "$UI_RESET"
   read -r _ || true
+}
+
+# apply_file SRC DEST — copy SRC to DEST if DEST does not exist.
+apply_file() {
+  local src="$1" dest="$2"
+  if [ ! -f "$src" ]; then
+    printf '%s!%s missing template: %s\n' "$UI_YELLOW" "$UI_RESET" "$src"
+    return 1
+  fi
+  if [ -e "$dest" ]; then
+    printf '%s!%s %s already exists; skipping\n' "$UI_YELLOW" "$UI_RESET" "$dest"
+    return 0
+  fi
+  mkdir -p "$(dirname -- "$dest")"
+  cp "$src" "$dest"
+  printf '%s✓%s copied to %s\n' "$UI_GREEN" "$UI_RESET" "$dest"
+}
+
+# apply_rc_source SRC TAG — ensure `. SRC` is sourced from ~/.bashrc and ~/.zshrc.
+# Idempotent: uses a marker line tagged with TAG.
+apply_rc_source() {
+  local src="$1" tag="$2"
+  local marker="#~/config:${tag}:source"
+  local rc line
+  line="[ -f \"$src\" ] && . \"$src\" ${marker}"
+  for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    [ -f "$rc" ] || touch "$rc"
+    if grep -Fq "$marker" "$rc" 2>/dev/null; then
+      printf '%s=%s %s already sources %s\n' "$UI_DIM" "$UI_RESET" "$rc" "$tag"
+    else
+      printf '\n%s\n' "$line" >> "$rc"
+      printf '%s+%s %s now sources %s\n' "$UI_GREEN" "$UI_RESET" "$rc" "$src"
+    fi
+  done
 }
 
 pick_mise_tools() {
@@ -58,6 +93,8 @@ pick_mise_tools() {
   ob_install_mise_tools "${picked[@]}"
 }
 
+# ---- install actions ----
+
 do_recommend() {
   printf '\n%s== Recommend ==%s\n' "$UI_BOLD" "$UI_RESET"
   ob_install_brew
@@ -79,34 +116,131 @@ do_mise() {
   pick_mise_tools
 }
 
+# ---- config actions ----
+
 do_gitconfig() {
-  if [ -f "$HOME/.gitconfig" ]; then
-    printf '%s!%s %s already exists; skipping\n' "$UI_YELLOW" "$UI_RESET" "$HOME/.gitconfig"
-    return 0
-  fi
-  cp "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
-  printf '%s✓%s generated %s\n' "$UI_GREEN" "$UI_RESET" "$HOME/.gitconfig"
+  printf '\n%s== gitconfig ==%s\n' "$UI_BOLD" "$UI_RESET"
+  apply_file "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 }
 
-do_gituser() {
-  local name email
-  printf 'git user.name : '
-  read -r name
-  printf 'git user.email: '
-  read -r email
-  git config --global user.name "$name"
-  git config --global user.email "$email"
-  git config --global --list | grep '^user\.'
+do_nanorc() {
+  printf '\n%s== nanorc ==%s\n' "$UI_BOLD" "$UI_RESET"
+  apply_file "$DOTFILES_DIR/.nanorc" "$HOME/.nanorc"
 }
 
 do_tmux() {
-  if [ -f "$HOME/.tmux.conf" ]; then
-    printf '%s!%s %s already exists; skipping\n' "$UI_YELLOW" "$UI_RESET" "$HOME/.tmux.conf"
-    return 0
-  fi
-  cp "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
-  printf '%s✓%s generated %s\n' "$UI_GREEN" "$UI_RESET" "$HOME/.tmux.conf"
+  printf '\n%s== tmux.conf ==%s\n' "$UI_BOLD" "$UI_RESET"
+  apply_file "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
   tmux source-file "$HOME/.tmux.conf" 2>/dev/null || true
+}
+
+do_ghostty() {
+  printf '\n%s== ghostty ==%s\n' "$UI_BOLD" "$UI_RESET"
+  apply_file "$XDG_DIR/ghostty/config" "$HOME/.config/ghostty/config"
+}
+
+do_tm_properties() {
+  printf '\n%s== tm_properties ==%s\n' "$UI_BOLD" "$UI_RESET"
+  apply_file "$DOTFILES_DIR/.tm_properties" "$HOME/.tm_properties"
+}
+
+# ---- ai-config actions ----
+
+do_opencode() {
+  printf '\n%s== opencode ==%s\n' "$UI_BOLD" "$UI_RESET"
+  local f
+  for f in "$XDG_DIR"/opencode/opencode-*.json; do
+    [ -f "$f" ] || continue
+    apply_file "$f" "$HOME/.config/opencode/$(basename "$f")"
+  done
+  apply_rc_source "$XDG_DIR/opencode/.bashrc.template" "opencode"
+}
+
+do_claude() {
+  printf '\n%s== claude ==%s\n' "$UI_BOLD" "$UI_RESET"
+  apply_rc_source "$DOTFILES_DIR/.claude/.bashrc.template" "claude"
+}
+
+# ---- submenus ----
+
+submenu_install() {
+  local -a labels actions
+  while true; do
+    printf '\033[H\033[2J'
+    local brew_tag="" mise_tag=""
+    ob_has brew && brew_tag=" ${UI_GREEN}(installed)${UI_RESET}"
+    ob_has mise && mise_tag=" ${UI_GREEN}(installed)${UI_RESET}"
+    labels=(
+      "Recommend — brew + mise + global tools"
+      "Brew 설치${brew_tag}"
+      "Mise 설치${mise_tag}"
+      "← back"
+    )
+    actions=(
+      do_recommend
+      do_brew
+      do_mise
+      __back
+    )
+    ui_menu "install" labels
+    [ "$UI_CHOICE" = "255" ] && return 0
+    local fn="${actions[$UI_CHOICE]}"
+    [ "$fn" = "__back" ] && return 0
+    "$fn"
+    pause
+  done
+}
+
+submenu_config() {
+  local -a labels actions
+  while true; do
+    printf '\033[H\033[2J'
+    labels=(
+      "gitconfig"
+      "nanorc"
+      "tmux"
+      "ghostty"
+      "tm_properties"
+      "← back"
+    )
+    actions=(
+      do_gitconfig
+      do_nanorc
+      do_tmux
+      do_ghostty
+      do_tm_properties
+      __back
+    )
+    ui_menu "config" labels
+    [ "$UI_CHOICE" = "255" ] && return 0
+    local fn="${actions[$UI_CHOICE]}"
+    [ "$fn" = "__back" ] && return 0
+    "$fn"
+    pause
+  done
+}
+
+submenu_ai_config() {
+  local -a labels actions
+  while true; do
+    printf '\033[H\033[2J'
+    labels=(
+      "opencode"
+      "claude"
+      "← back"
+    )
+    actions=(
+      do_opencode
+      do_claude
+      __back
+    )
+    ui_menu "ai-config" labels
+    [ "$UI_CHOICE" = "255" ] && return 0
+    local fn="${actions[$UI_CHOICE]}"
+    [ "$fn" = "__back" ] && return 0
+    "$fn"
+    pause
+  done
 }
 
 do_exit() {
@@ -114,41 +248,28 @@ do_exit() {
   exit 0
 }
 
-build_main_menu() {
-  local brew_tag="" mise_tag=""
-  ob_has brew && brew_tag=" ${UI_GREEN}(installed)${UI_RESET}"
-  ob_has mise && mise_tag=" ${UI_GREEN}(installed)${UI_RESET}"
-  MAIN_LABELS=(
-    "Recommend — brew + mise + global tools"
-    "Brew 설치${brew_tag}"
-    "Mise 설치${mise_tag}"
-    "gitconfig 적용"
-    "git user 설정"
-    "tmux.conf 적용"
+main() {
+  local -a labels actions
+  labels=(
+    "install"
+    "config"
+    "ai-config"
     "Exit"
   )
-  MAIN_ACTIONS=(
-    do_recommend
-    do_brew
-    do_mise
-    do_gitconfig
-    do_gituser
-    do_tmux
+  actions=(
+    submenu_install
+    submenu_config
+    submenu_ai_config
     do_exit
   )
-}
-
-main() {
   while true; do
     printf '\033[H\033[2J'
-    build_main_menu
-    ui_menu "config" MAIN_LABELS
+    ui_menu "onboard" labels
     if [ "$UI_CHOICE" = "255" ]; then
       do_exit
     fi
-    local fn="${MAIN_ACTIONS[$UI_CHOICE]}"
+    local fn="${actions[$UI_CHOICE]}"
     "$fn"
-    pause
   done
 }
 

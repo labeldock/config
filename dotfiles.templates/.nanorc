@@ -1,0 +1,8 @@
+set tabsize 2
+set tabstospaces
+set autoindent
+set mouse
+set softwrap
+set atblanks
+set whitespace "→·"
+# set whitespacedisplay # alt + p

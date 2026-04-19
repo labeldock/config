@@ -1,0 +1,5 @@
+# claude aliases
+alias ccrdsp='claude --model opus --resume --dangerously-skip-permissions'
+alias ccodsp='claude --model opus --dangerously-skip-permissions'
+alias tcrdsp='claude --model opus --teammate-mode auto --resume --dangerously-skip-permissions'
+alias tcodsp='claude --model opus --teammate-mode auto --dangerously-skip-permissions'
