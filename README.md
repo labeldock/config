@@ -1,25 +1,77 @@
 # config
 
-This is a collection of my git, tmux, and other configs.
+A personal collection of git, tmux, shell, terminal, and CLI-tool configs. See [PRINCIPLES.md](./PRINCIPLES.md) for the intent and direction of this repo.
 
-See [PRINCIPLES.md](./PRINCIPLES.md) for the intent and direction of this repo.
-
-# thanks
-[A reference code](https://github.com/dsdstudio/dotfiles)
+This repo is dual-mode: you can either clone it and run `onboard`, or open any template file on GitHub and copy it by hand into your home directory — both paths land on the same baseline.
 
 # install
+
 You must have git installed. Then:
+
 ```bash
 cd ~ && git clone https://github.com/labeldock/config.git
 ~/config/onboard
 ```
-`onboard` 는 화살표/Space/Enter/Esc 기반의 메뉴를 띄웁니다. `Recommend` 를 선택하면 brew + mise + 글로벌 도구(jq, yq, fd, ripgrep, lazygit, delta, yazi, fzf, zoxide) 를 한 번에 설치할 수 있습니다.
+
+`onboard` opens an arrow-key / Space / Enter / Esc menu. Picking `install → Recommend` installs brew + mise + a global CLI toolset in one go; the `config` and `ai-config` submenus apply dotfile / XDG templates with a status badge and a diff-prompt flow so existing settings aren't silently overwritten.
+
+# What this repo installs and configures
+
+## Baseline packages (install submenu)
+
+| Tool | Role |
+| --- | --- |
+| [Homebrew](https://brew.sh) | system-level package manager (macOS/Linux) |
+| [mise](https://mise.jdx.dev) | runtime version manager (node, python, bun, …) |
+
+Picking `Recommend` installs both, then offers a multi-select for the following global tools via `mise`:
+
+| Category | Tools |
+| --- | --- |
+| Text processing | `jq`, `yq` |
+| File / search | `fd`, `ripgrep` |
+| Git workflow | `lazygit`, `delta` |
+| File browsing | `yazi` |
+| Shell productivity | `fzf`, `zoxide` |
+
+Items already on `$PATH` show as `(installed)` and are deselected by default.
+
+## Config templates
+
+Templates are split by their destination path:
+
+| Source directory | Destination | Examples |
+| --- | --- | --- |
+| [`dotfiles.templates/`](./dotfiles.templates) | `$HOME/...` | `.gitconfig`, `.tmux.conf`, `.nanorc`, `.tm_properties` |
+| [`xdg_config.templates/`](./xdg_config.templates) | `$HOME/.config/...` | `ghostty/config`, `opencode/*.json`, `yazi/keymap.toml` |
+
+Each `config` / `ai-config` menu item is applied using one of three strategies:
+
+| Strategy | When used | Behaviour |
+| --- | --- | --- |
+| **copy** | plain config files (gitconfig, nanorc, tmux.conf, ghostty/config, tm_properties, opencode JSON) | missing → copy; differs → show unified diff and ask before overwriting; identical → no-op |
+| **source** | shell rc snippets (`claude/.bashrc.template`, `opencode/.bashrc.template`) | appends a single `[ -f <template> ] && . <template>` line to `~/.bashrc` / `~/.zshrc`, tagged with a marker comment so it runs exactly once |
+| **toml-merge** | `yazi/keymap.toml` | parses `[[mgr.prepend_keymap]]` blocks, replaces matching blocks by their `on =` key, appends new ones; user-added keys and non-block comments are preserved |
+
+The merge logic lives in [`lib/toml_merge.py`](./lib/toml_merge.py); `onboard` calls it via `python3`.
+
+## Items in each submenu
+
+| Submenu | Items |
+| --- | --- |
+| `install` | `Recommend`, `Brew`, `Mise` |
+| `config` | `gitconfig`, `nanorc`, `tmux`, `ghostty`, `tm_properties`, `yazi` |
+| `ai-config` | `opencode`, `claude` |
+
+Each item shows a status badge before you pick it: `+ missing`, `= in sync`, `~ diff`, `~ partial`, `= sourced`, `+ not sourced`.
 
 # GIT alias
 
-Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.gitconfig). Run `onboard` and pick `gitconfig 적용` to apply.
+Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.gitconfig). Run `onboard` and pick `gitconfig` to apply. Click a section to expand.
 
-## status / diff
+<details>
+<summary><strong>status / diff</strong></summary>
+
 * `s` : branch list + status
 * `ss` : short status (`status -sb`)
 * `dun` : unstaged diff (`diff`)
@@ -27,41 +79,69 @@ Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.g
 * `d-1` : diff HEAD^..HEAD
 * `c <pattern>` : grep git config
 
-## checkout / branch
+</details>
+
+<details>
+<summary><strong>checkout / branch</strong></summary>
+
 * `ch` : checkout
 * `fs <name>` : feature start — `checkout -b`
 * `fd` : feature delete — delete current branch (master protected)
 
-## add
+</details>
+
+<details>
+<summary><strong>add</strong></summary>
+
 * `aa` : add --all
 * `ai` : add --interactive
 * `ap` : add --patch
 
-## commit
+</details>
+
+<details>
+<summary><strong>commit</strong></summary>
+
 * `cm <msg>` : commit -m
 * `cma` : commit --amend
 * `cmau` : commit --amend --reset-author
 * `undo` : reset HEAD^
 * `pick` : cherry-pick
 
-## push / pull
+</details>
+
+<details>
+<summary><strong>push / pull</strong></summary>
+
 * `pushf` : push -f
 * `pullf` : fetch tags + hard reset to origin
 
-## remote branch
+</details>
+
+<details>
+<summary><strong>remote branch</strong></summary>
+
 * `rch <branch>` : checkout remote branch as local
 * `rp` : push current branch to origin
 * `rpp` : push with --set-upstream
 * `rd` : delete remote branch matching current + unset upstream
 
-## git lfs
+</details>
+
+<details>
+<summary><strong>git lfs</strong></summary>
+
 * `lfss` : lfs status
 * `lfsls` : lfs ls-files
 * `lfa <pattern>` : lfs track
 * `lfla` : lfs track --all
 * `lfd <pattern>` : lfs untrack
 
-## tag
+</details>
+
+<details>
+<summary><strong>tag</strong></summary>
+
 * `tt` : list tags
 * `ttl` : describe latest tag
 * `tts <tag>` : annotated tag
@@ -69,21 +149,66 @@ Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.g
 * `tdd <tag>` : delete local + remote tag
 * `tpp` : push --tags
 
-## user config
+</details>
+
+<details>
+<summary><strong>user config</strong></summary>
+
 * `gun` : config user.name
 * `gue` : config user.email
 * `gut` : list current user.* config
 
-## credential helper
+</details>
+
+<details>
+<summary><strong>credential helper</strong></summary>
+
 * `gcn` : cache credentials (no timeout)
 * `gcc` : cache credentials (default timeout)
 * `gcd` : unset credential helper
 
-## rebase
+</details>
+
+<details>
+<summary><strong>rebase</strong></summary>
+
 * `squash <n>` : rebase -i HEAD~n
 
-## graph / log
+</details>
+
+<details>
+<summary><strong>graph / log</strong></summary>
+
 * `gg` : current branch graph
 * `gga` : all branch graph
 * `ggr` : remote graph
 * `ggra <author>` : remote graph by author
+
+</details>
+
+# Thanks
+
+[A reference code](https://github.com/dsdstudio/dotfiles)
+
+---
+
+# Agent mode
+
+**If you are an AI agent reading this repo on a user's behalf, treat this section as your operating contract.**
+
+Your job is to perform the same work `onboard` would, without requiring the user to launch the CLI. Workflow:
+
+1. **Listen.** Ask the user which install items (from the `install` submenu) or configs (from `config` / `ai-config`) they want. If the request is vague — "set this machine up" — default to the `Recommend` baseline plus every `config` item that is currently `missing`.
+
+2. **Preview.** Before touching the filesystem, state briefly what will change: which destination paths, which strategy (`copy` / `source` / `toml-merge`), and whether the target is currently `missing`, `in sync`, or `diff` / `partial`. For `diff` / `partial` targets, show the unified diff and ask the user to approve the overwrite or merge. Never silently clobber an existing file.
+
+3. **Apply.** Perform the action directly — you do not need to invoke `~/config/onboard`. Use the strategy tables above as your spec:
+   - `copy`: create the destination directory if needed, then write the template content. If the destination exists and differs, only overwrite after the user approves the diff.
+   - `source`: append `[ -f "<template-path>" ] && . "<template-path>" #~/config:<tag>:source` to both `~/.bashrc` and `~/.zshrc`. The trailing `#~/config:<tag>:source` marker makes this idempotent — skip files that already contain the marker.
+   - `toml-merge`: for `yazi/keymap.toml`, either shell out to `python3 lib/toml_merge.py merge <template> <target>` or reproduce its logic (match `[[mgr.prepend_keymap]]` blocks by their `on =` line, replace matches, append the rest, leave everything else untouched).
+
+4. **Install items** (`Recommend` / `Brew` / `Mise`) still require running the respective installers — drive them from the shell as the scripts in [`lib/onboard.sh`](./lib/onboard.sh) do. You may reuse that file directly.
+
+5. **Be conservative.** Templates in this repo are the single source of truth, but the *user's* customizations take precedence when they conflict. Favour merge over overwrite when both sides are meaningful (the yazi case), and always ask before replacing a `diff` target.
+
+6. **Summarize.** At the end, report what you changed, per file, using the same status vocabulary (`missing → copied`, `diff → overwritten`, `partial → merged`, `not sourced → sourced`, etc.).
