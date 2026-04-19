@@ -65,9 +65,9 @@ ui__read_key() {
 ui_menu() {
   local title="$1"
   local labels_name="$2"
-  local -a labels
-  eval "labels=(\"\${${labels_name}[@]}\")"
-  local n=${#labels[@]}
+  local -a ui__labels
+  eval "ui__labels=(\${${labels_name}[@]+\"\${${labels_name}[@]}\"})"
+  local n=${#ui__labels[@]}
   if [ "$n" -eq 0 ]; then UI_CHOICE=255; return 1; fi
 
   ui__tty_enter
@@ -82,9 +82,9 @@ ui_menu() {
     if [ "$first" -eq 1 ]; then first=0; else ui__clear_lines "$n"; fi
     for ((i=0; i<n; i++)); do
       if [ "$i" -eq "$idx" ]; then
-        printf '  %s▶ %s%s\n' "$UI_CYAN" "${labels[$i]}" "$UI_RESET"
+        printf '  %s▶ %s%s\n' "$UI_CYAN" "${ui__labels[$i]}" "$UI_RESET"
       else
-        printf '    %s\n' "${labels[$i]}"
+        printf '    %s\n' "${ui__labels[$i]}"
       fi
     done
     key=$(ui__read_key)
@@ -103,9 +103,9 @@ ui_multiselect() {
   local title="$1"
   local labels_name="$2"
   local preselected="${3:-}"
-  local -a labels
-  eval "labels=(\"\${${labels_name}[@]}\")"
-  local n=${#labels[@]}
+  local -a ui__labels
+  eval "ui__labels=(\${${labels_name}[@]+\"\${${labels_name}[@]}\"})"
+  local n=${#ui__labels[@]}
   if [ "$n" -eq 0 ]; then UI_CHOICES=""; return 1; fi
 
   local -a marked
@@ -130,9 +130,9 @@ ui_multiselect() {
         marker="[ ]"
       fi
       if [ "$i" -eq "$idx" ]; then
-        printf '  %s▶%s %s %s\n' "$UI_CYAN" "$UI_RESET" "$marker" "${labels[$i]}"
+        printf '  %s▶%s %s %s\n' "$UI_CYAN" "$UI_RESET" "$marker" "${ui__labels[$i]}"
       else
-        printf '   %s %s\n' "$marker" "${labels[$i]}"
+        printf '   %s %s\n' "$marker" "${ui__labels[$i]}"
       fi
     done
     key=$(ui__read_key)
