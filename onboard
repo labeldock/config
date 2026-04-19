@@ -43,12 +43,9 @@ status_copy() {
 # status_source TAG → echoes: sourced | not
 status_source() {
   local tag="$1"
-  local marker_source="#~/config:${tag}:source"
-  local marker_begin="#~/config:${tag}:begin"
-  for m in "$marker_source" "$marker_begin"; do
-    if grep -Fq "$m" "$HOME/.bashrc" 2>/dev/null; then echo sourced; return; fi
-    if grep -Fq "$m" "$HOME/.zshrc" 2>/dev/null; then echo sourced; return; fi
-  done
+  local marker="#~/config:${tag}:source"
+  if grep -Fq "$marker" "$HOME/.bashrc" 2>/dev/null; then echo sourced; return; fi
+  if grep -Fq "$marker" "$HOME/.zshrc" 2>/dev/null; then echo sourced; return; fi
   echo not
 }
 
@@ -126,36 +123,14 @@ apply_rc_source() {
     if grep -Fq "$marker" "$rc" 2>/dev/null; then
       printf '%s=%s %s already sources %s\n' "$UI_DIM" "$UI_RESET" "$rc" "$tag"
     else
-      printf '\n%s\n' "$line" >> "$rc"
-      printf '%s+%s %s now sources %s\n' "$UI_GREEN" "$UI_RESET" "$rc" "$src"
-    fi
-  done
-}
-
-# apply_rc_append SRC TAG — append template content into ~/.bashrc and ~/.zshrc.
-# Idempotent: uses begin/end marker lines tagged with TAG.
-apply_rc_append() {
-  local src="$1" tag="$2"
-  local marker_begin="#~/config:${tag}:begin"
-  local marker_end="#~/config:${tag}:end"
-  if [ ! -f "$src" ]; then
-    printf '%s!%s missing template: %s\n' "$UI_YELLOW" "$UI_RESET" "$src"
-    return 1
-  fi
-  local rc
-  for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
-    [ -f "$rc" ] || touch "$rc"
-    if grep -Fq "$marker_begin" "$rc" 2>/dev/null; then
-      printf '%s=%s %s already has %s block\n' "$UI_DIM" "$UI_RESET" "$rc" "$tag"
-    else
-      printf '\n%sAppend to %s:%s\n' "$UI_YELLOW" "$rc" "$UI_RESET"
-      printf '%s' "$UI_DIM"; cat "$src"; printf '%s\n' "$UI_RESET"
-      printf 'Append? [y/N] '
+      printf '\n%s→%s will add a source line to %s (not a copy — references the original):\n' "$UI_CYAN" "$UI_RESET" "$rc"
+      printf '  %s%s%s\n' "$UI_DIM" "$line" "$UI_RESET"
+      printf 'Apply? [y/N] '
       local yn; read -r yn
       case "$yn" in
         y|Y)
-          { printf '\n%s\n' "$marker_begin"; cat "$src"; printf '\n%s\n' "$marker_end"; } >> "$rc"
-          printf '%s+%s appended to %s\n' "$UI_GREEN" "$UI_RESET" "$rc"
+          printf '\n%s\n' "$line" >> "$rc"
+          printf '%s+%s %s now sources %s\n' "$UI_GREEN" "$UI_RESET" "$rc" "$src"
           ;;
         *)
           printf 'skipped\n'
@@ -316,7 +291,7 @@ do_opencode() {
 
 do_claude() {
   printf '\n%s== claude ==%s\n' "$UI_BOLD" "$UI_RESET"
-  apply_rc_append "$DOTFILES_DIR/.claude/.bashrc.template" "claude"
+  apply_rc_source "$DOTFILES_DIR/.claude/.bashrc.template" "claude"
 }
 
 # ---- submenus ----
