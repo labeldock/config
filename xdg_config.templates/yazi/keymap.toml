@@ -1,3 +1,63 @@
+# === Open ===
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "<Enter>" ]
+run = "enter"
+desc = "→ 자식 디렉토리"
+
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "o" ]
+run = "open --interactive"
+desc = "Open with picker"
+
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "O" ]
+run = "open"
+desc = "Open with default"
+
+# === Edit submenu ===
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "e", "n" ]
+run = 'shell --block -- nano "$1"'
+desc = "Edit with nano"
+
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "e", "v" ]
+run = 'shell --block -- vim "$1"'
+desc = "Edit with vim"
+
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "e", "e" ]
+run = 'shell --block -- $EDITOR "$1"'
+desc = "Edit with $EDITOR"
+
+# === Navigation ===
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "h" ]
+run = "leave"
+desc = "← 부모 디렉토리"
+
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "l" ]
+run = "enter"
+desc = "→ 자식 디렉토리"
+
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "z" ]
+run = "plugin zoxide"
+desc = "Jump via zoxide"
+
+# === Misc ===
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "r" ]
+run = "shell -- open -R %s1"
+desc = "Reveal in Finder"
+
+[[mgr.prepend_keymap]]
+on = [ "<Enter>", "?" ]
+run = "help"
+desc = "Show all keys"
+
+# === o / O swap (top-level) ===
 [[mgr.prepend_keymap]]
 on = "o"
 run = "open --interactive"
