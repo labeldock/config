@@ -1,72 +1,108 @@
 # config
-This is a collection of my git, vim, tmux, and other configs.
+
+This is a collection of my git, tmux, and other configs.
+
+See [PRINCIPLES.md](./PRINCIPLES.md) for the intent and direction of this repo.
 
 # thanks
 [A reference code](https://github.com/dsdstudio/dotfiles)
 
 # install
-You must have git installed. and..
+You must have git installed. Then:
 ```bash
 cd ~ && git clone https://github.com/labeldock/config.git
+cd ~/config && bash install.sh
 ```
-# command
+Reopen your terminal, then:
 ```
 config
-```
-![configlow](https://user-images.githubusercontent.com/1593115/54964847-58da0680-4fb1-11e9-9f53-7728eb73f5b1.gif)
-
-# setting
-```bash
-#bash
-vim ~/.bash_profile
-
-#paste
-[[ -s "$HOME/config/unix-init.sh" ]] && source "$HOME/config/unix-init.sh"
-
-#:wq
-
-# reopen terminal
-
-config
-i!
 ```
 
 # GIT alias
-## basic command
-* pick : Cherry pick's Shortcut
-* s :(status) This is a shortcut for 'git status'. I can see the contents of the brunch.
-* ss : The degree of change of remote and current brunch
-* ch :(change) It's a shortcut to 'git checkout'.
-* chf : checkout file 'git chf *', 'git chf index.js'
-* cdf : Delete files that do not have commit history. 'git cdf *', 'git cdf index.js'
-* pushf : push force
-* pullf : pull force
-* rch :(remote change) Checkout the remote brunch as a local brunch.
-* rp  :(remote push) Upload a local brunch that is not registered on the remote.
-* rpp :(remote push with stream) Upload a local brunch that is not registered on the remote.
-* rd :(remote delete) Delete the remote brunch, such as the current local brunch, from the remote.
-* fs :(feature start) checkout (Feature start)
-* fd :(feature delete) Delete current branche (Feature delete)
-* aa :(add all) git add --all
-* ai :(add intractive) git add --interactive
-* ap :(add patch) git add --patch
-* cm :(commit) git commit -m
-* cma:(amend commit) git commit --amend
-* cmu:(amend commit for user) git commit --amend --reset-auther
-* un :(unstage) View the unindexed diff.
-* in : View the indexed diff.
-* inn : Compare to previous commit.
-* undo : Cancel the current commit.
-* co : (checkout -- file) Change to the contents of the previous commit. [ git co . | git co path/file.md ]
-* cf : (clean unstage file) delete unstage file with [ git cf . | git cf file.md ]
-* i : Find the git setting.
 
-## graph command
-* ag : All graph
-* g : Curret graph
-* aga : Find all graph with author param
-* ga : Find graph with author
-* agg : All remote graph
-* gg : Remote graph
-* agga : Find all remote graph with author param
-* gga : Find remote graph with author param
+Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.gitconfig). Run `setup_gitconfig` from the `config` menu to apply.
+
+## status / diff
+* `s` : branch list + status
+* `ss` : short status (`status -sb`)
+* `dun` : unstaged diff (`diff`)
+* `din` : indexed diff (`diff --cached`)
+* `d-1` : diff HEAD^..HEAD
+* `c <pattern>` : grep git config
+
+## checkout / branch
+* `ch` : checkout
+* `chf <file>` : checkout file (`checkout --`)
+* `cdf <file>` : clean untracked file (`clean -df --`)
+* `fs <name>` : feature start — `checkout -b`
+* `fd` : feature delete — delete current branch (master protected)
+
+## add
+* `aa` : add --all
+* `ai` : add --interactive
+* `ap` : add --patch
+* `lfix` : add --renormalize
+
+## commit
+* `cm <msg>` : commit -m
+* `cma` : commit --amend
+* `cmau` : commit --amend --reset-author
+* `cmad <date>` : amend with committer date
+* `chmodx <file>` : mark file as +x in index
+* `undo` : reset HEAD^
+* `pick` : cherry-pick
+
+## push / pull
+* `pushf` : push -f
+* `pullf` : fetch tags + hard reset to origin
+
+## remote branch
+* `rch <branch>` : checkout remote branch as local
+* `rp` : push current branch to origin
+* `rpp` : push with --set-upstream
+* `rd` : delete remote branch matching current + unset upstream
+
+## submodule
+* `sc` : submodule update --init --recursive
+* `su` : submodule update --recursive
+* `spull` : submodule foreach git pull
+
+## git lfs
+* `lf` : lfs status
+* `lfls` : lfs ls-files
+* `lfa <pattern>` : lfs track
+* `lfla` : lfs track --all
+* `lfd <pattern>` : lfs untrack
+
+## tag
+* `tt` : list tags
+* `ttl` : describe latest tag
+* `tchl` : checkout latest tag
+* `ts <tag>` : annotated tag
+* `tss <tag>` : annotated tag + push
+* `td <tag>` : delete local tag
+* `tdd <tag>` : delete local + remote tag
+* `tpp` : push --tags
+
+## user config
+* `gun` : config user.name
+* `gue` : config user.email
+* `gut` : list current user.* config
+
+## credential helper
+* `gcn` : cache credentials (no timeout)
+* `gcc` : cache credentials (default timeout)
+* `gcd` : unset credential helper
+
+## rebase
+* `squash <n>` : rebase -i HEAD~n
+
+## graph / log
+* `g` : current branch graph
+* `ag` : all branch graph
+* `ga <author>` : current graph by author
+* `aga <pattern>` : all graph by commit message (grep)
+* `gg` : remote graph
+* `agg` : all remote graph
+* `gga <author>` : remote graph by author
+* `agga <author>` : all remote graph by author

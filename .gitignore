@@ -3,9 +3,6 @@
 dotfiles.active
 dotfiles.backup.*
 
-#
-Vundle.vim
-
 #legacy
 unix-source
 unix-source.backup.*
