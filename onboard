@@ -9,6 +9,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 DOTFILES_DIR="$SCRIPT_DIR/dotfiles.templates"
 XDG_DIR="$SCRIPT_DIR/xdg_config.templates"
+TOML_MERGE="$SCRIPT_DIR/lib/toml_merge.py"
 
 MISE_TOOLS=(
   jq
@@ -29,20 +30,77 @@ pause() {
   read -r _ || true
 }
 
-# apply_file SRC DEST — copy SRC to DEST if DEST does not exist.
-apply_file() {
+# ---- status helpers ----
+
+# status_copy SRC DEST → echoes: missing | same | diff
+status_copy() {
+  local src="$1" dest="$2"
+  if [ ! -e "$dest" ]; then echo missing; return; fi
+  if cmp -s "$src" "$dest"; then echo same; else echo diff; fi
+}
+
+# status_source TAG → echoes: sourced | not
+status_source() {
+  local tag="$1"
+  local marker="#~/config:${tag}:source"
+  if grep -Fq "$marker" "$HOME/.bashrc" 2>/dev/null; then echo sourced; return; fi
+  if grep -Fq "$marker" "$HOME/.zshrc" 2>/dev/null; then echo sourced; return; fi
+  echo not
+}
+
+# status_toml_merge SRC DEST → echoes: missing | same | partial
+status_toml_merge() {
+  local src="$1" dest="$2"
+  if [ ! -e "$dest" ]; then echo missing; return; fi
+  python3 "$TOML_MERGE" status "$src" "$dest" 2>/dev/null || echo unknown
+}
+
+# fmt_badge STATUS → colored badge rendered to stdout
+fmt_badge() {
+  case "$1" in
+    missing) printf '%s+ missing%s'     "$UI_CYAN"   "$UI_RESET" ;;
+    same)    printf '%s= in sync%s'     "$UI_DIM"    "$UI_RESET" ;;
+    diff)    printf '%s~ diff%s'        "$UI_YELLOW" "$UI_RESET" ;;
+    partial) printf '%s~ partial%s'     "$UI_YELLOW" "$UI_RESET" ;;
+    sourced) printf '%s= sourced%s'     "$UI_DIM"    "$UI_RESET" ;;
+    not)     printf '%s+ not sourced%s' "$UI_CYAN"   "$UI_RESET" ;;
+    *)       printf '%s? %s%s'          "$UI_DIM"  "$1" "$UI_RESET" ;;
+  esac
+}
+
+# ---- apply helpers ----
+
+# apply_copy SRC DEST — copy; when DEST exists and differs, show diff and prompt.
+apply_copy() {
   local src="$1" dest="$2"
   if [ ! -f "$src" ]; then
     printf '%s!%s missing template: %s\n' "$UI_YELLOW" "$UI_RESET" "$src"
     return 1
   fi
-  if [ -e "$dest" ]; then
-    printf '%s!%s %s already exists; skipping\n' "$UI_YELLOW" "$UI_RESET" "$dest"
+  if [ ! -e "$dest" ]; then
+    mkdir -p "$(dirname -- "$dest")"
+    cp "$src" "$dest"
+    printf '%s+%s copied (new) to %s\n' "$UI_GREEN" "$UI_RESET" "$dest"
     return 0
   fi
-  mkdir -p "$(dirname -- "$dest")"
-  cp "$src" "$dest"
-  printf '%s✓%s copied to %s\n' "$UI_GREEN" "$UI_RESET" "$dest"
+  if cmp -s "$src" "$dest"; then
+    printf '%s=%s %s already matches template\n' "$UI_DIM" "$UI_RESET" "$dest"
+    return 0
+  fi
+  printf '%s~%s %s differs from template:\n' "$UI_YELLOW" "$UI_RESET" "$dest"
+  printf '%s(up to 200 lines; --- target / +++ template)%s\n\n' "$UI_DIM" "$UI_RESET"
+  diff -u "$dest" "$src" | head -200
+  printf '\nOverwrite %s? [y/N] ' "$dest"
+  local yn; read -r yn
+  case "$yn" in
+    y|Y)
+      cp "$src" "$dest"
+      printf '%s✓%s overwritten\n' "$UI_GREEN" "$UI_RESET"
+      ;;
+    *)
+      printf 'skipped\n'
+      ;;
+  esac
 }
 
 # apply_rc_source SRC TAG — ensure `. SRC` is sourced from ~/.bashrc and ~/.zshrc.
@@ -61,6 +119,47 @@ apply_rc_source() {
       printf '%s+%s %s now sources %s\n' "$UI_GREEN" "$UI_RESET" "$rc" "$src"
     fi
   done
+}
+
+# apply_toml_merge SRC DEST — per-[[mgr.prepend_keymap]].on block merge.
+apply_toml_merge() {
+  local src="$1" dest="$2"
+  if [ ! -f "$src" ]; then
+    printf '%s!%s missing template: %s\n' "$UI_YELLOW" "$UI_RESET" "$src"
+    return 1
+  fi
+  if [ ! -e "$dest" ]; then
+    mkdir -p "$(dirname -- "$dest")"
+    cp "$src" "$dest"
+    printf '%s+%s copied (new) to %s\n' "$UI_GREEN" "$UI_RESET" "$dest"
+    return 0
+  fi
+  local tmp; tmp=$(mktemp)
+  if ! python3 "$TOML_MERGE" merge "$src" "$dest" > "$tmp"; then
+    rm -f "$tmp"
+    printf '%s!%s merge failed (python3 required)\n' "$UI_YELLOW" "$UI_RESET"
+    return 1
+  fi
+  if cmp -s "$dest" "$tmp"; then
+    printf '%s=%s %s already has all template keys\n' "$UI_DIM" "$UI_RESET" "$dest"
+    rm -f "$tmp"
+    return 0
+  fi
+  printf '%s~%s %s would be merged:\n' "$UI_YELLOW" "$UI_RESET" "$dest"
+  printf '%s(up to 200 lines; --- target / +++ merged)%s\n\n' "$UI_DIM" "$UI_RESET"
+  diff -u "$dest" "$tmp" | head -200
+  printf '\nApply merge? [y/N] '
+  local yn; read -r yn
+  case "$yn" in
+    y|Y)
+      mv "$tmp" "$dest"
+      printf '%s✓%s merged\n' "$UI_GREEN" "$UI_RESET"
+      ;;
+    *)
+      rm -f "$tmp"
+      printf 'skipped\n'
+      ;;
+  esac
 }
 
 pick_mise_tools() {
@@ -120,28 +219,33 @@ do_mise() {
 
 do_gitconfig() {
   printf '\n%s== gitconfig ==%s\n' "$UI_BOLD" "$UI_RESET"
-  apply_file "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+  apply_copy "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 }
 
 do_nanorc() {
   printf '\n%s== nanorc ==%s\n' "$UI_BOLD" "$UI_RESET"
-  apply_file "$DOTFILES_DIR/.nanorc" "$HOME/.nanorc"
+  apply_copy "$DOTFILES_DIR/.nanorc" "$HOME/.nanorc"
 }
 
 do_tmux() {
   printf '\n%s== tmux.conf ==%s\n' "$UI_BOLD" "$UI_RESET"
-  apply_file "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
+  apply_copy "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
   tmux source-file "$HOME/.tmux.conf" 2>/dev/null || true
 }
 
 do_ghostty() {
   printf '\n%s== ghostty ==%s\n' "$UI_BOLD" "$UI_RESET"
-  apply_file "$XDG_DIR/ghostty/config" "$HOME/.config/ghostty/config"
+  apply_copy "$XDG_DIR/ghostty/config" "$HOME/.config/ghostty/config"
 }
 
 do_tm_properties() {
   printf '\n%s== tm_properties ==%s\n' "$UI_BOLD" "$UI_RESET"
-  apply_file "$DOTFILES_DIR/.tm_properties" "$HOME/.tm_properties"
+  apply_copy "$DOTFILES_DIR/.tm_properties" "$HOME/.tm_properties"
+}
+
+do_yazi() {
+  printf '\n%s== yazi ==%s\n' "$UI_BOLD" "$UI_RESET"
+  apply_toml_merge "$XDG_DIR/yazi/keymap.toml" "$HOME/.config/yazi/keymap.toml"
 }
 
 # ---- ai-config actions ----
@@ -151,7 +255,7 @@ do_opencode() {
   local f
   for f in "$XDG_DIR"/opencode/opencode-*.json; do
     [ -f "$f" ] || continue
-    apply_file "$f" "$HOME/.config/opencode/$(basename "$f")"
+    apply_copy "$f" "$HOME/.config/opencode/$(basename "$f")"
   done
   apply_rc_source "$XDG_DIR/opencode/.bashrc.template" "opencode"
 }
@@ -195,12 +299,20 @@ submenu_config() {
   local -a labels actions
   while true; do
     printf '\033[H\033[2J'
+    local st_git st_nano st_tmux st_ghostty st_tm st_yazi
+    st_git=$(status_copy       "$DOTFILES_DIR/.gitconfig"     "$HOME/.gitconfig")
+    st_nano=$(status_copy      "$DOTFILES_DIR/.nanorc"        "$HOME/.nanorc")
+    st_tmux=$(status_copy      "$DOTFILES_DIR/.tmux.conf"     "$HOME/.tmux.conf")
+    st_ghostty=$(status_copy   "$XDG_DIR/ghostty/config"      "$HOME/.config/ghostty/config")
+    st_tm=$(status_copy        "$DOTFILES_DIR/.tm_properties" "$HOME/.tm_properties")
+    st_yazi=$(status_toml_merge "$XDG_DIR/yazi/keymap.toml"   "$HOME/.config/yazi/keymap.toml")
     labels=(
-      "gitconfig"
-      "nanorc"
-      "tmux"
-      "ghostty"
-      "tm_properties"
+      "gitconfig      $(fmt_badge "$st_git")"
+      "nanorc         $(fmt_badge "$st_nano")"
+      "tmux           $(fmt_badge "$st_tmux")"
+      "ghostty        $(fmt_badge "$st_ghostty")"
+      "tm_properties  $(fmt_badge "$st_tm")"
+      "yazi           $(fmt_badge "$st_yazi")"
       "← back"
     )
     actions=(
@@ -209,6 +321,7 @@ submenu_config() {
       do_tmux
       do_ghostty
       do_tm_properties
+      do_yazi
       __back
     )
     ui_menu "config" labels
@@ -224,9 +337,12 @@ submenu_ai_config() {
   local -a labels actions
   while true; do
     printf '\033[H\033[2J'
+    local st_opencode st_claude
+    st_opencode=$(status_source "opencode")
+    st_claude=$(status_source   "claude")
     labels=(
-      "opencode"
-      "claude"
+      "opencode  $(fmt_badge "$st_opencode")"
+      "claude    $(fmt_badge "$st_claude")"
       "← back"
     )
     actions=(
