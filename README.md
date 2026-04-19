@@ -15,16 +15,13 @@ cd ~ && git clone https://github.com/labeldock/config.git
 
 `onboard` opens an arrow-key / Space / Enter / Esc menu. Picking `install → Recommend` installs brew + mise + a global CLI toolset in one go; the `config` and `ai-config` submenus apply dotfile / XDG templates with a status badge and a diff-prompt flow so existing settings aren't silently overwritten.
 
-# What this repo installs and configures
+# What we prefer here
 
-## Baseline packages (install submenu)
+This is a personal taste. If any of it looks useful, feel free to borrow.
 
-| Tool | Role |
-| --- | --- |
-| [Homebrew](https://brew.sh) | system-level package manager (macOS/Linux) |
-| [mise](https://mise.jdx.dev) | runtime version manager (node, python, bun, …) |
+## Tools we like (install submenu)
 
-Picking `Recommend` installs both, then offers a multi-select for the following global tools via `mise`:
+We reach for [Homebrew](https://brew.sh) as the system package manager and [mise](https://mise.jdx.dev) for runtime versions. On top of that, these are the CLI tools we keep globally installed via mise:
 
 | Category | Tools |
 | --- | --- |
@@ -34,18 +31,18 @@ Picking `Recommend` installs both, then offers a multi-select for the following 
 | File browsing | `yazi` |
 | Shell productivity | `fzf`, `zoxide` |
 
-Items already on `$PATH` show as `(installed)` and are deselected by default.
+`Recommend` installs the lot in one go. Anything already on `$PATH` is shown as `(installed)` and skipped.
 
-## Config templates
+## Configs we use
 
-Templates are split by their destination path:
+Templates live in two directories, each mapping to a destination:
 
 | Source directory | Destination | Examples |
 | --- | --- | --- |
 | [`dotfiles.templates/`](./dotfiles.templates) | `$HOME/...` | `.gitconfig`, `.tmux.conf`, `.nanorc`, `.tm_properties` |
 | [`xdg_config.templates/`](./xdg_config.templates) | `$HOME/.config/...` | `ghostty/config`, `opencode/*.json`, `yazi/keymap.toml` |
 
-Each `config` / `ai-config` menu item is applied using one of three strategies:
+When you pick a menu item, one of these strategies applies:
 
 | Strategy | When used | Behaviour |
 | --- | --- | --- |
@@ -56,7 +53,7 @@ Each `config` / `ai-config` menu item is applied using one of three strategies:
 
 The merge logic lives in [`lib/gitconfig_merge.py`](./lib/gitconfig_merge.py) and [`lib/toml_merge.py`](./lib/toml_merge.py); `onboard` calls them via `python3`.
 
-## Items in each submenu
+## Menu items at a glance
 
 | Submenu | Items |
 | --- | --- |
@@ -64,7 +61,7 @@ The merge logic lives in [`lib/gitconfig_merge.py`](./lib/gitconfig_merge.py) an
 | `config` | `gitconfig`, `nanorc`, `tmux`, `ghostty`, `tm_properties`, `yazi` |
 | `ai-config` | `opencode`, `claude` |
 
-Each item shows a status badge before you pick it: `+ missing`, `= in sync`, `~ diff`, `~ partial`, `= sourced`, `+ not sourced`.
+Each item shows a status badge so you can see where you stand before touching anything: `+ missing`, `= in sync`, `~ diff`, `~ partial`, `= sourced`, `+ not sourced`.
 
 # GIT alias
 
