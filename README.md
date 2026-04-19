@@ -83,11 +83,7 @@ Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.g
 * `squash <n>` : rebase -i HEAD~n
 
 ## graph / log
-* `g` : current branch graph
-* `ag` : all branch graph
-* `ga <author>` : current graph by author
-* `aga <pattern>` : all graph by commit message (grep)
-* `gg` : remote graph
-* `agg` : all remote graph
-* `gga <author>` : remote graph by author
-* `agga <author>` : all remote graph by author
+* `gg` : current branch graph
+* `gga` : all branch graph
+* `ggr` : remote graph
+* `ggra <author>` : remote graph by author
