@@ -1,6 +1,6 @@
 # config
 
-A personal collection of git, tmux, shell, terminal, and CLI-tool configs. See [PRINCIPLES.md](./PRINCIPLES.md) for the intent and direction of this repo.
+A personal collection of git, tmux, shell, terminal, and CLI-tool configs.
 
 This repo is dual-mode: you can either clone it and run `onboard`, or open any template file on GitHub and copy it by hand into your home directory — both paths land on the same baseline.
 
@@ -187,6 +187,8 @@ Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.g
 # Thanks
 
 [A reference code](https://github.com/dsdstudio/dotfiles)
+
+See [PRINCIPLES.md](./PRINCIPLES.md) for the intent and direction of this repo.
 
 ---
 
