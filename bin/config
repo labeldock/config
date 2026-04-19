@@ -1,74 +1,155 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# config — onboarding menu.
 
-#imports 
+set -u
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-. "$SCRIPT_DIR/../lib/helper.sh"
+. "$SCRIPT_DIR/../lib/ui.sh"
+. "$SCRIPT_DIR/../lib/onboard.sh"
 
-DOTFILES_TEMPLATES_PATH="${SCRIPT_DIR}/../dotfiles.templates"
-DOTFILES_TEMPLATES_DIR=$(readlink -f "$DOTFILES_TEMPLATES_PATH")
+DOTFILES_DIR=$( cd -- "$SCRIPT_DIR/../dotfiles.templates" &> /dev/null && pwd )
 
-#menu
-AVAILABLE_MENU=()
-AVAILABLE_MENU+=("EXIT exit_script")
-AVAILABLE_MENU+=("gitconfig setup_gitconfig")
-AVAILABLE_MENU+=("gituser input_git_user")
-AVAILABLE_MENU+=("tmux_conf setup_tmux_config")
-echo "curr @@$CURRENT_SHELL@@"
-if [ "$CURRENT_SHELL" = "zsh" ]; then
-  MENU_NAMES=$(entries_to_words AVAILABLE_MENU 1)
-  MENU_FNS=$(entries_to_words AVAILABLE_MENU 2)
-else
-  MENU_NAMES=$(entries_to_words AVAILABLE_MENU[@] 1)
-  MENU_FNS=$(entries_to_words AVAILABLE_MENU[@] 2)
-fi
+MISE_TOOLS=(
+  jq
+  yq
+  fd
+  ripgrep
+  lazygit
+  delta
+  yazi
+  fzf
+  zoxide
+)
 
+ob__extend_path
 
-#application
-setup_gitconfig (){
-  if [[ ! -f "$HOME/.gitconfig"  ]]; then
-    cp -r "$DOTFILES_TEMPLATES_DIR/.gitconfig" "$HOME/.gitconfig"
-    echo "Generated  $HOME/.gitconfig"
-  else
-    if grep -q "\[alias\]" "$HOME/.gitconfig"; then
-      echo "$HOME/.gitconfig file already exists. Skipping."
+pause() {
+  printf '\n%s[Enter 로 계속]%s ' "$UI_DIM" "$UI_RESET"
+  read -r _ || true
+}
+
+pick_mise_tools() {
+  local -a labels=()
+  local -a presel=()
+  local i tool
+  for ((i=0; i<${#MISE_TOOLS[@]}; i++)); do
+    tool="${MISE_TOOLS[$i]}"
+    if ob_tool_installed "$tool"; then
+      labels[$i]="$tool ${UI_DIM}(installed)${UI_RESET}"
     else
-      echo "The [alias] string does not exist in the $HOME/.gitconfig file."
+      labels[$i]="$tool"
+      presel+=($i)
     fi
+  done
+  ui_multiselect "mise 글로벌 설치 대상" labels "${presel[*]:-}"
+  if [ -z "$UI_CHOICES" ]; then
+    printf '취소됨\n'
+    return 0
   fi
-}
-
-setup_tmux_config (){
-  if [[ ! -f "$HOME/.tmux.conf" ]]; then
-    cp -r "$DOTFILES_TEMPLATES_DIR/.tmux.conf" "$HOME/.tmux.conf"
-    echo "Generated  $HOME/.tmux.conf"
-  else
-    echo "$HOME/.tmux.conf file already exists. Skipping."
+  local -a picked=()
+  for i in $UI_CHOICES; do
+    picked+=("${MISE_TOOLS[$i]}")
+  done
+  if [ ${#picked[@]} -eq 0 ]; then
+    printf '선택 없음\n'
+    return 0
   fi
-  tmux source-file "$HOME/.tmux.conf"
+  echo
+  ob_install_mise_tools "${picked[@]}"
 }
 
-input_git_user (){
-  local name
-  local email
-  echo "GIT user name"
-  read name
-  echo "GIT user email"
-  read email
-  git config user.name "$name"
-  git config user.email "$email"
-  git config --list | grep "user."
+do_recommend() {
+  printf '\n%s== Recommend ==%s\n' "$UI_BOLD" "$UI_RESET"
+  ob_install_brew
+  echo
+  ob_install_mise
+  echo
+  pick_mise_tools
 }
 
-exit_script (){
-  echo ""
-  echo "You have chosen to exit"
-  echo ""
+do_brew() {
+  printf '\n%s== Brew ==%s\n' "$UI_BOLD" "$UI_RESET"
+  ob_install_brew
 }
 
-main (){
-  echo "Please enter the number of the desired item and press Enter."
-  ask_no_words SELECT_INDEX ${MENU_NAMES}
-  call_no_words ${SELECT_INDEX} ${MENU_FNS}
+do_mise() {
+  printf '\n%s== Mise ==%s\n' "$UI_BOLD" "$UI_RESET"
+  ob_install_mise
+  echo
+  pick_mise_tools
 }
-  
+
+do_gitconfig() {
+  if [ -f "$HOME/.gitconfig" ]; then
+    printf '%s!%s %s already exists; skipping\n' "$UI_YELLOW" "$UI_RESET" "$HOME/.gitconfig"
+    return 0
+  fi
+  cp "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+  printf '%s✓%s generated %s\n' "$UI_GREEN" "$UI_RESET" "$HOME/.gitconfig"
+}
+
+do_gituser() {
+  local name email
+  printf 'git user.name : '
+  read -r name
+  printf 'git user.email: '
+  read -r email
+  git config --global user.name "$name"
+  git config --global user.email "$email"
+  git config --global --list | grep '^user\.'
+}
+
+do_tmux() {
+  if [ -f "$HOME/.tmux.conf" ]; then
+    printf '%s!%s %s already exists; skipping\n' "$UI_YELLOW" "$UI_RESET" "$HOME/.tmux.conf"
+    return 0
+  fi
+  cp "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
+  printf '%s✓%s generated %s\n' "$UI_GREEN" "$UI_RESET" "$HOME/.tmux.conf"
+  tmux source-file "$HOME/.tmux.conf" 2>/dev/null || true
+}
+
+do_exit() {
+  printf '\nbye.\n'
+  exit 0
+}
+
+build_main_menu() {
+  local brew_tag="" mise_tag=""
+  ob_has brew && brew_tag=" ${UI_GREEN}(installed)${UI_RESET}"
+  ob_has mise && mise_tag=" ${UI_GREEN}(installed)${UI_RESET}"
+  MAIN_LABELS=(
+    "Recommend — brew + mise + global tools"
+    "Brew 설치${brew_tag}"
+    "Mise 설치${mise_tag}"
+    "gitconfig 적용"
+    "git user 설정"
+    "tmux.conf 적용"
+    "Exit"
+  )
+  MAIN_ACTIONS=(
+    do_recommend
+    do_brew
+    do_mise
+    do_gitconfig
+    do_gituser
+    do_tmux
+    do_exit
+  )
+}
+
+main() {
+  while true; do
+    printf '\033[H\033[2J'
+    build_main_menu
+    ui_menu "config" MAIN_LABELS
+    if [ "$UI_CHOICE" = "255" ]; then
+      do_exit
+    fi
+    local fn="${MAIN_ACTIONS[$UI_CHOICE]}"
+    "$fn"
+    pause
+  done
+}
+
 main "$@"
