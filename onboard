@@ -10,6 +10,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 DOTFILES_DIR="$SCRIPT_DIR/dotfiles.templates"
 XDG_DIR="$SCRIPT_DIR/xdg_config.templates"
 TOML_MERGE="$SCRIPT_DIR/lib/toml_merge.py"
+GITCONFIG_MERGE="$SCRIPT_DIR/lib/gitconfig_merge.py"
 
 MISE_TOOLS=(
   jq
@@ -42,9 +43,12 @@ status_copy() {
 # status_source TAG → echoes: sourced | not
 status_source() {
   local tag="$1"
-  local marker="#~/config:${tag}:source"
-  if grep -Fq "$marker" "$HOME/.bashrc" 2>/dev/null; then echo sourced; return; fi
-  if grep -Fq "$marker" "$HOME/.zshrc" 2>/dev/null; then echo sourced; return; fi
+  local marker_source="#~/config:${tag}:source"
+  local marker_begin="#~/config:${tag}:begin"
+  for m in "$marker_source" "$marker_begin"; do
+    if grep -Fq "$m" "$HOME/.bashrc" 2>/dev/null; then echo sourced; return; fi
+    if grep -Fq "$m" "$HOME/.zshrc" 2>/dev/null; then echo sourced; return; fi
+  done
   echo not
 }
 
@@ -53,6 +57,13 @@ status_toml_merge() {
   local src="$1" dest="$2"
   if [ ! -e "$dest" ]; then echo missing; return; fi
   python3 "$TOML_MERGE" status "$src" "$dest" 2>/dev/null || echo unknown
+}
+
+# status_gitconfig_merge SRC DEST → echoes: missing | same | partial
+status_gitconfig_merge() {
+  local src="$1" dest="$2"
+  if [ ! -e "$dest" ]; then echo missing; return; fi
+  python3 "$GITCONFIG_MERGE" status "$src" "$dest" 2>/dev/null || echo unknown
 }
 
 # fmt_badge STATUS → colored badge rendered to stdout
@@ -121,9 +132,52 @@ apply_rc_source() {
   done
 }
 
+# apply_rc_append SRC TAG — append template content into ~/.bashrc and ~/.zshrc.
+# Idempotent: uses begin/end marker lines tagged with TAG.
+apply_rc_append() {
+  local src="$1" tag="$2"
+  local marker_begin="#~/config:${tag}:begin"
+  local marker_end="#~/config:${tag}:end"
+  if [ ! -f "$src" ]; then
+    printf '%s!%s missing template: %s\n' "$UI_YELLOW" "$UI_RESET" "$src"
+    return 1
+  fi
+  local rc
+  for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    [ -f "$rc" ] || touch "$rc"
+    if grep -Fq "$marker_begin" "$rc" 2>/dev/null; then
+      printf '%s=%s %s already has %s block\n' "$UI_DIM" "$UI_RESET" "$rc" "$tag"
+    else
+      printf '\n%sAppend to %s:%s\n' "$UI_YELLOW" "$rc" "$UI_RESET"
+      printf '%s' "$UI_DIM"; cat "$src"; printf '%s\n' "$UI_RESET"
+      printf 'Append? [y/N] '
+      local yn; read -r yn
+      case "$yn" in
+        y|Y)
+          { printf '\n%s\n' "$marker_begin"; cat "$src"; printf '\n%s\n' "$marker_end"; } >> "$rc"
+          printf '%s+%s appended to %s\n' "$UI_GREEN" "$UI_RESET" "$rc"
+          ;;
+        *)
+          printf 'skipped\n'
+          ;;
+      esac
+    fi
+  done
+}
+
 # apply_toml_merge SRC DEST — per-[[mgr.prepend_keymap]].on block merge.
 apply_toml_merge() {
-  local src="$1" dest="$2"
+  apply_key_merge "$1" "$2" "$TOML_MERGE"
+}
+
+# apply_gitconfig_merge SRC DEST — per-key gitconfig merge.
+apply_gitconfig_merge() {
+  apply_key_merge "$1" "$2" "$GITCONFIG_MERGE"
+}
+
+# apply_key_merge SRC DEST SCRIPT — run a python merge helper and confirm.
+apply_key_merge() {
+  local src="$1" dest="$2" script="$3"
   if [ ! -f "$src" ]; then
     printf '%s!%s missing template: %s\n' "$UI_YELLOW" "$UI_RESET" "$src"
     return 1
@@ -135,7 +189,7 @@ apply_toml_merge() {
     return 0
   fi
   local tmp; tmp=$(mktemp)
-  if ! python3 "$TOML_MERGE" merge "$src" "$dest" > "$tmp"; then
+  if ! python3 "$script" merge "$src" "$dest" > "$tmp"; then
     rm -f "$tmp"
     printf '%s!%s merge failed (python3 required)\n' "$UI_YELLOW" "$UI_RESET"
     return 1
@@ -219,7 +273,7 @@ do_mise() {
 
 do_gitconfig() {
   printf '\n%s== gitconfig ==%s\n' "$UI_BOLD" "$UI_RESET"
-  apply_copy "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+  apply_gitconfig_merge "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 }
 
 do_nanorc() {
@@ -262,7 +316,7 @@ do_opencode() {
 
 do_claude() {
   printf '\n%s== claude ==%s\n' "$UI_BOLD" "$UI_RESET"
-  apply_rc_source "$DOTFILES_DIR/.claude/.bashrc.template" "claude"
+  apply_rc_append "$DOTFILES_DIR/.claude/.bashrc.template" "claude"
 }
 
 # ---- submenus ----
@@ -300,7 +354,7 @@ submenu_config() {
   while true; do
     printf '\033[H\033[2J'
     local st_git st_nano st_tmux st_ghostty st_tm st_yazi
-    st_git=$(status_copy       "$DOTFILES_DIR/.gitconfig"     "$HOME/.gitconfig")
+    st_git=$(status_gitconfig_merge "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig")
     st_nano=$(status_copy      "$DOTFILES_DIR/.nanorc"        "$HOME/.nanorc")
     st_tmux=$(status_copy      "$DOTFILES_DIR/.tmux.conf"     "$HOME/.tmux.conf")
     st_ghostty=$(status_copy   "$XDG_DIR/ghostty/config"      "$HOME/.config/ghostty/config")

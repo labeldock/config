@@ -49,11 +49,12 @@ Each `config` / `ai-config` menu item is applied using one of three strategies:
 
 | Strategy | When used | Behaviour |
 | --- | --- | --- |
-| **copy** | plain config files (gitconfig, nanorc, tmux.conf, ghostty/config, tm_properties, opencode JSON) | missing → copy; differs → show unified diff and ask before overwriting; identical → no-op |
+| **copy** | plain config files (nanorc, tmux.conf, ghostty/config, tm_properties, opencode JSON) | missing → copy; differs → show unified diff and ask before overwriting; identical → no-op |
 | **source** | shell rc snippets (`claude/.bashrc.template`, `opencode/.bashrc.template`) | appends a single `[ -f <template> ] && . <template>` line to `~/.bashrc` / `~/.zshrc`, tagged with a marker comment so it runs exactly once |
+| **gitconfig-merge** | `.gitconfig` | per-key upsert: template keys overwrite matching keys in the target, keys that exist only in the target are preserved, and sections that exist only in the target (e.g. `[user]`, `[credential "..."]`, `[core]`, `[delta]`) are left untouched |
 | **toml-merge** | `yazi/keymap.toml` | parses `[[mgr.prepend_keymap]]` blocks, replaces matching blocks by their `on =` key, appends new ones; user-added keys and non-block comments are preserved |
 
-The merge logic lives in [`lib/toml_merge.py`](./lib/toml_merge.py); `onboard` calls it via `python3`.
+The merge logic lives in [`lib/gitconfig_merge.py`](./lib/gitconfig_merge.py) and [`lib/toml_merge.py`](./lib/toml_merge.py); `onboard` calls them via `python3`.
 
 ## Items in each submenu
 
@@ -205,6 +206,7 @@ Your job is to perform the same work `onboard` would, without requiring the user
 3. **Apply.** Perform the action directly — you do not need to invoke `~/config/onboard`. Use the strategy tables above as your spec:
    - `copy`: create the destination directory if needed, then write the template content. If the destination exists and differs, only overwrite after the user approves the diff.
    - `source`: append `[ -f "<template-path>" ] && . "<template-path>" #~/config:<tag>:source` to both `~/.bashrc` and `~/.zshrc`. The trailing `#~/config:<tag>:source` marker makes this idempotent — skip files that already contain the marker.
+   - `gitconfig-merge`: for `.gitconfig`, shell out to `python3 lib/gitconfig_merge.py merge <template> <target>`. Template keys upsert into the target at key granularity; target-only keys and target-only sections (including `[user]`, `[credential "..."]`, `[core]`, `[delta]`, `[merge]`) are preserved verbatim. There is no per-key diff prompt — a single unified diff is shown over the whole file and the user confirms once.
    - `toml-merge`: for `yazi/keymap.toml`, either shell out to `python3 lib/toml_merge.py merge <template> <target>` or reproduce its logic (match `[[mgr.prepend_keymap]]` blocks by their `on =` line, replace matches, append the rest, leave everything else untouched).
 
 4. **Install items** (`Recommend` / `Brew` / `Mise`) still require running the respective installers — drive them from the shell as the scripts in [`lib/onboard.sh`](./lib/onboard.sh) do. You may reuse that file directly.

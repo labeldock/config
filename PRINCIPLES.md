@@ -51,9 +51,10 @@ Git Bash는 best-effort 수준으로만 지원합니다. 특수 파일/설정이
 - **적용 전략 (goal)**: 기존 사용자 설정을 최대한 존중하면서 적용하는 것을 지향합니다. 아직 완성된 설계가 아니라 지향점이며, 현재 구현은 아래 3가지 축으로 발전시키는 중입니다.
   - **copy** — 단순 복사. target 이 없으면 새로 쓰고, 내용이 다르면 unified diff 를 보여준 뒤 사용자 승인으로만 덮어씁니다.
   - **source** — 쉘 rc 파일에 한 줄 `source` 삽입 (마커 기반 멱등).
-  - **toml-merge** — 구조화된 TOML 파일에 대해 key 단위 merge. 현재는 `yazi/keymap.toml` 에 대해서만 동작하며, `lib/toml_merge.py` (Python) 가 담당합니다. 이처럼 `config` 의 TOML merge 작업은 bash 가 아닌 Python 에 위임합니다.
+  - **gitconfig-merge** — `.gitconfig` 에 대해 key 단위 upsert. 템플릿 key 는 대상에 있든 없든 새 값으로 반영하고, 대상에만 있는 key / 대상에만 있는 섹션(`[user]`, `[credential "..."]`, `[core]`, `[delta]`, `[merge]` 등)은 그대로 보존합니다. key 내부 값까지 diff 하지 않고, 최종 merge 결과에 대해서만 한 번의 unified diff + Y/N 확인을 받습니다. 구현은 `lib/gitconfig_merge.py`.
+  - **toml-merge** — 구조화된 TOML 파일에 대해 key 단위 merge. 현재는 `yazi/keymap.toml` 에 대해서만 동작하며, `lib/toml_merge.py` (Python) 가 담당합니다. 이처럼 `config` 의 구조화된 merge 작업은 bash 가 아닌 Python 에 위임합니다.
   - 각 항목은 선택 전에 `missing` / `same` / `diff` / `partial` / `sourced` / `not sourced` 뱃지로 상태를 노출해, 사용자가 적용 시 어떤 변화가 일어날지 미리 인지할 수 있게 합니다.
-  - 위 3 전략이 포괄하지 못하는 케이스는 당분간 **Agent 위임** 경로로 유연하게 대응합니다 (README 의 Agent mode 참조).
+  - 위 전략들이 포괄하지 못하는 케이스는 당분간 **Agent 위임** 경로로 유연하게 대응합니다 (README 의 Agent mode 참조).
 
 ## 시스템 기본 설치 대상
 
