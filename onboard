@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# config — onboarding menu.
+# onboard — interactive setup menu. Run as `~/config/onboard`.
 
 set -u
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-. "$SCRIPT_DIR/../lib/ui.sh"
-. "$SCRIPT_DIR/../lib/onboard.sh"
+. "$SCRIPT_DIR/lib/ui.sh"
+. "$SCRIPT_DIR/lib/onboard.sh"
 
-DOTFILES_DIR=$( cd -- "$SCRIPT_DIR/../dotfiles.templates" &> /dev/null && pwd )
+DOTFILES_DIR="$SCRIPT_DIR/dotfiles.templates"
 
 MISE_TOOLS=(
   jq

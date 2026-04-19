@@ -11,16 +11,13 @@ See [PRINCIPLES.md](./PRINCIPLES.md) for the intent and direction of this repo.
 You must have git installed. Then:
 ```bash
 cd ~ && git clone https://github.com/labeldock/config.git
-cd ~/config && bash install.sh
+~/config/onboard
 ```
-Reopen your terminal, then:
-```
-config
-```
+`onboard` 는 화살표/Space/Enter/Esc 기반의 메뉴를 띄웁니다. `Recommend` 를 선택하면 brew + mise + 글로벌 도구(jq, yq, fd, ripgrep, lazygit, delta, yazi, fzf, zoxide) 를 한 번에 설치할 수 있습니다.
 
 # GIT alias
 
-Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.gitconfig). Run `setup_gitconfig` from the `config` menu to apply.
+Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.gitconfig). Run `onboard` and pick `gitconfig 적용` to apply.
 
 ## status / diff
 * `s` : branch list + status

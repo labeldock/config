@@ -25,7 +25,7 @@ Git Bash는 best-effort 수준으로만 지원합니다. 특수 파일/설정이
 ## 온보딩 스크립트 방향
 
 - **런타임**: bash 유지. `@clack/prompts` 같은 외부 런타임은 도입하지 않습니다. 현재 범위에서는 bash가 충분합니다.
-- **구성**: `install.sh`(진입점, shell 감지 + PATH 등록) → `bin/config`(메뉴 기반 세부 세팅).
+- **진입점**: 레포 루트의 `onboard` 실행파일 하나. (`~/config/onboard` 직접 실행; Rails 의 `bin/rails` 스타일). 별도의 PATH 등록/쉘 재시작 없이 바로 동작합니다.
 - **UI**: 방향키로 이동, Space 로 토글, Enter 로 완료, Esc/q 로 취소. `lib/ui.sh` 가 공용 헬퍼(`ui_menu`, `ui_multiselect`) 를 제공합니다. bash 3.2 (macOS 기본) 호환을 위해 `stty` 로 ESC 시퀀스를 감지합니다.
 - **메뉴 구조**: `Recommend` (brew + mise + global tools) / `Brew 설치` / `Mise 설치` / `gitconfig 적용` / `git user 설정` / `tmux.conf 적용` / `Exit`. 이미 설치된 항목은 `(installed)` 로 표기됩니다.
 
@@ -55,4 +55,3 @@ Git Bash는 best-effort 수준으로만 지원합니다. 특수 파일/설정이
 - `gitconfig` 템플릿 적용
 - git user 설정 입력
 - `tmux.conf` 템플릿 적용
-- `config/bin` PATH 등록
