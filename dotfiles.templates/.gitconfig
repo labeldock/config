@@ -4,12 +4,7 @@
     pullf = !git fetch --tags && git reset origin/$(git symbolic-ref --short -q HEAD) --hard
     s   = !git branch -a && git status
     ss  = status -sb
-    sc  = submodule update --init --recursive
-    su  = submodule update --recursive
-    spull = submodule foreach git pull
     ch  = checkout
-    chf = checkout --
-    cdf = clean -df --
     rch = !git checkout -t origin/$1 && false &&
     rp  = !git push origin $(git symbolic-ref --short -q HEAD)
     rpp = !git push --set-upstream origin $(git symbolic-ref --short -q HEAD)
@@ -19,22 +14,18 @@
     aa = add --all
     ai = add --interactive
     ap = add --patch
-    lf = lfs status
-    lfls = lfs ls-files
+    lfss = lfs status
+    lfsls = lfs ls-files
     lfla = lfs track --all
     lfa = lfs track
     lfd = lfs untrack
     cm  = commit -m
     cma = commit --amend
     cmau = commit --amend --reset-author
-    cmad = !GIT_COMMITTER_DATE="$1" commit --amend --no-edit --date "$1"
-    chmodx = update-index --add --chmod=+x
     tt = tag -l
     ttl = !git describe --tags `git rev-list --tags --max-count=1`
-    tchl = !git checkout $(git ttl)
-    ts = !git tag -a "$1" && false &&
+    tts = !git tag -a "$1" && false &&
     tpp = push --tags
-    td = !git tag -d "$1" && false &&
     tss = !git tag -a "$1" && git tpp && false &&
     tdd = !git tag -d "$1" && git push origin :refs/tags/$1 && false &&
     dun = diff
@@ -47,7 +38,6 @@
     gcn = config credential.helper "cache --timeout=0"
     gcc = config credential.helper cache
     gcd = config --unset credential.helper
-    lfix = add --renormalize
     c  = !git config --list | grep
     squash = !git rebase -i HEAD~$1 && false &&
     ag = log --graph --all --pretty=format:'%C(dim)%h - %C(reset)%ad %C(bold blue)(%cr)%C(bold red)%d%C(reset)%n           %C(reset)%s%C(reset)%n           %C(dim green)%an<%ae>%n' --abbrev-commit --date=iso

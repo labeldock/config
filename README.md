@@ -29,8 +29,6 @@ Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.g
 
 ## checkout / branch
 * `ch` : checkout
-* `chf <file>` : checkout file (`checkout --`)
-* `cdf <file>` : clean untracked file (`clean -df --`)
 * `fs <name>` : feature start — `checkout -b`
 * `fd` : feature delete — delete current branch (master protected)
 
@@ -38,14 +36,11 @@ Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.g
 * `aa` : add --all
 * `ai` : add --interactive
 * `ap` : add --patch
-* `lfix` : add --renormalize
 
 ## commit
 * `cm <msg>` : commit -m
 * `cma` : commit --amend
 * `cmau` : commit --amend --reset-author
-* `cmad <date>` : amend with committer date
-* `chmodx <file>` : mark file as +x in index
 * `undo` : reset HEAD^
 * `pick` : cherry-pick
 
@@ -59,14 +54,9 @@ Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.g
 * `rpp` : push with --set-upstream
 * `rd` : delete remote branch matching current + unset upstream
 
-## submodule
-* `sc` : submodule update --init --recursive
-* `su` : submodule update --recursive
-* `spull` : submodule foreach git pull
-
 ## git lfs
-* `lf` : lfs status
-* `lfls` : lfs ls-files
+* `lfss` : lfs status
+* `lfsls` : lfs ls-files
 * `lfa <pattern>` : lfs track
 * `lfla` : lfs track --all
 * `lfd <pattern>` : lfs untrack
@@ -74,10 +64,8 @@ Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.g
 ## tag
 * `tt` : list tags
 * `ttl` : describe latest tag
-* `tchl` : checkout latest tag
-* `ts <tag>` : annotated tag
+* `tts <tag>` : annotated tag
 * `tss <tag>` : annotated tag + push
-* `td <tag>` : delete local tag
 * `tdd <tag>` : delete local + remote tag
 * `tpp` : push --tags
 
