@@ -1,11 +1,11 @@
 # claude plan (opus 4.6 — writing cohesion)
-alias cprdsp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --resume --dangerously-skip-permissions'
-alias cpodsp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --dangerously-skip-permissions'
-alias tprdsp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --teammate-mode auto --resume --dangerously-skip-permissions'
-alias tpodsp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --teammate-mode auto --dangerously-skip-permissions'
+alias cprdsp='CLAUDE_CODE_NO_FLICKER=1 ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --resume --dangerously-skip-permissions'
+alias cpodsp='CLAUDE_CODE_NO_FLICKER=1 ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --dangerously-skip-permissions'
+alias tprdsp='CLAUDE_CODE_NO_FLICKER=1 ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --teammate-mode auto --resume --dangerously-skip-permissions'
+alias tpodsp='CLAUDE_CODE_NO_FLICKER=1 ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --teammate-mode auto --dangerously-skip-permissions'
 
 # claude edge (latest opus — coding cohesion)
-alias cerdsp='claude --model opus --resume --dangerously-skip-permissions'
-alias ceodsp='claude --model opus --dangerously-skip-permissions'
-alias terdsp='claude --model opus --teammate-mode auto --resume --dangerously-skip-permissions'
-alias teodsp='claude --model opus --teammate-mode auto --dangerously-skip-permissions'
+alias cerdsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --resume --dangerously-skip-permissions'
+alias ceodsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --dangerously-skip-permissions'
+alias terdsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --teammate-mode auto --resume --dangerously-skip-permissions'
+alias teodsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --teammate-mode auto --dangerously-skip-permissions'
