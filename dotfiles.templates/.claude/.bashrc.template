@@ -1,11 +1,18 @@
-# claude plan (opus 4.6 — writing cohesion)
-alias cprdsp='CLAUDE_CODE_NO_FLICKER=1 ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --resume --dangerously-skip-permissions'
-alias cpodsp='CLAUDE_CODE_NO_FLICKER=1 ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --dangerously-skip-permissions'
-alias tprdsp='CLAUDE_CODE_NO_FLICKER=1 ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --teammate-mode auto --resume --dangerously-skip-permissions'
-alias tpodsp='CLAUDE_CODE_NO_FLICKER=1 ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 claude --model opus --teammate-mode auto --dangerously-skip-permissions'
+# If migrating these aliases to PowerShell, do NOT use the --teammate-mode
+# tmux is not available on Windows; let Claude Code
 
-# claude edge (latest opus — coding cohesion)
-alias cerdsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --resume --dangerously-skip-permissions'
-alias ceodsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --dangerously-skip-permissions'
-alias terdsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --teammate-mode auto --resume --dangerously-skip-permissions'
-alias teodsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --teammate-mode auto --dangerously-skip-permissions'
+# claude plan (opus 4.6 — writing cohesion)
+alias cpasp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 CLAUDE_CODE_NO_FLICKER=1 claude --model opus --permission-mode auto'
+alias cpdsp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 CLAUDE_CODE_NO_FLICKER=1 claude --model opus --dangerously-skip-permissions'
+alias tpasp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opus --permission-mode auto'
+alias tpdsp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opus --dangerously-skip-permissions'
+
+# claude explorer or executor (sonnet —  well-versed work)
+alias ceasp='CLAUDE_CODE_NO_FLICKER=1 claude --model sonnet --permission-mode auto'
+alias cedsp='CLAUDE_CODE_NO_FLICKER=1 claude --model sonnet --dangerously-skip-permissions'
+
+# claude opus edge (latest opus — coding cohesion)
+alias coasp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --permission-mode auto'
+alias codsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --dangerously-skip-permissions'
+alias toasp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opus --permission-mode auto'
+alias todsp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opus --dangerously-skip-permissions'
