@@ -1,0 +1,10 @@
+# completion 시스템 — <Tab> 자동완성 활성화 (tmux 세션 이름 `tmux a -t <Tab>`, git, cd 등).
+#
+# onboard 의 source 방식은 이 파일을 ~/.bashrc 와 ~/.zshrc 양쪽에서 source 한다.
+# 내용은 zsh 전용(compinit·zstyle·autoload)이라 bash 에서 에러 나지 않도록 가드한다.
+# rc 파일 끝에서 source 되므로 fpath 를 건드리는 init(mise 등) 뒤에 실행된다 → 그쪽
+# 완성 함수까지 잡힌다. tmux 완성 함수(_tmux)는 zsh 에 기본 포함 — 별도 설치 불필요.
+if [ -n "${ZSH_VERSION:-}" ]; then
+  autoload -Uz compinit && compinit
+  zstyle ':completion:*' menu select   # 후보 여러 개면 화살표로 선택
+fi

@@ -47,7 +47,7 @@ When you pick a menu item, one of these strategies applies:
 | Strategy | When used | Behaviour |
 | --- | --- | --- |
 | **copy** | plain config files (nanorc, tmux.conf, ghostty/config, tm_properties, opencode JSON) | missing → copy; differs → show unified diff and ask before overwriting; identical → no-op |
-| **source** | shell rc snippets (`claude/.bashrc.template`, `opencode/.bashrc.template`) | appends a single `[ -f <template> ] && . <template>` line to `~/.bashrc` / `~/.zshrc`, tagged with a marker comment so it runs exactly once |
+| **source** | shell rc snippets (`completion.bashrc.template`, `claude/.bashrc.template`, `opencode/.bashrc.template`) | appends a single `[ -f <template> ] && . <template>` line to `~/.bashrc` / `~/.zshrc`, tagged with a marker comment so it runs exactly once |
 | **gitconfig-merge** | `.gitconfig` | per-key upsert: template keys overwrite matching keys in the target, keys that exist only in the target are preserved, and sections that exist only in the target (e.g. `[user]`, `[credential "..."]`, `[core]`, `[delta]`) are left untouched |
 | **toml-merge** | `yazi/keymap.toml` | parses `[[mgr.prepend_keymap]]` blocks, replaces matching blocks by their `on =` key, appends new ones; user-added keys and non-block comments are preserved |
 
@@ -58,7 +58,7 @@ The merge logic lives in [`lib/gitconfig_merge.py`](./lib/gitconfig_merge.py) an
 | Submenu | Items |
 | --- | --- |
 | `install` | `Recommend`, `Brew`, `Mise` |
-| `config` | `gitconfig`, `nanorc`, `tmux`, `ghostty`, `tm_properties`, `yazi` |
+| `config` | `gitconfig`, `nanorc`, `tmux`, `ghostty`, `tm_properties`, `yazi`, `completion` |
 | `ai-config` | `opencode`, `claude` |
 
 Each item shows a status badge so you can see where you stand before touching anything: `+ missing`, `= in sync`, `~ diff`, `~ partial`, `= sourced`, `+ not sourced`.
