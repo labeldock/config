@@ -47,7 +47,7 @@ Git Bash는 best-effort 수준으로만 지원합니다. 특수 파일/설정이
 - **진입점**: 레포 루트의 `onboard` 실행파일 하나. (`~/config/onboard` 직접 실행; Rails 의 `bin/rails` 스타일). 별도의 PATH 등록/쉘 재시작 없이 바로 동작합니다.
 - **UI**: 방향키로 이동, Space 로 토글, Enter 로 완료, Esc/q 로 취소. `lib/ui.sh` 가 공용 헬퍼(`ui_menu`, `ui_multiselect`) 를 제공합니다. bash 3.2 (macOS 기본) 호환을 위해 `stty` 로 ESC 시퀀스를 감지합니다.
 - **메뉴 구조**: 최상위는 `install` / `config` / `ai-config` / `Exit` 의 3-tier 구조입니다. 서브메뉴 하단의 `← back` 또는 Esc 로 상위로 복귀합니다. 이미 설치된 항목은 `(installed)` 뱃지로 표기됩니다. 서브메뉴 내부의 구체 항목은 상세 지원 목록이므로 본 문서가 아닌 `README.md` 와 코드를 참조합니다.
-- **rc 통합 방식**: AI 관련 alias 는 각 템플릿 파일을 그대로 두고, `.bashrc`/`.zshrc` 에 `[ -f <template> ] && . <template>` 한 줄을 추가하는 source 방식입니다. 템플릿을 수정하면 즉시 반영되며, 같은 내용을 복제하지 않습니다. 멱등성은 `#~/config:<tag>:source` 마커로 유지합니다.
+- **rc 통합 방식**: 셸 헬퍼/alias 는 각 템플릿 파일을 그대로 두고, `.bashrc`/`.zshrc` 에 `[ -f <template> ] && . <template>` 한 줄을 추가하는 source 방식입니다. 템플릿을 수정하면 즉시 반영되며, 같은 내용을 복제하지 않습니다. 멱등성은 `#~/config:<tag>:source` 마커로 유지합니다. 현재 예: `completion.bashrc.template`, `tmux.bashrc.template`, `claude/.bashrc.template`, `opencode/.bashrc.template`.
 - **적용 전략 (goal)**: 기존 사용자 설정을 최대한 존중하면서 적용하는 것을 지향합니다. 아직 완성된 설계가 아니라 지향점이며, 현재 구현은 아래 3가지 축으로 발전시키는 중입니다.
   - **copy** — 단순 복사. target 이 없으면 새로 쓰고, 내용이 다르면 unified diff 를 보여준 뒤 사용자 승인으로만 덮어씁니다.
   - **source** — 쉘 rc 파일에 한 줄 `source` 삽입 (마커 기반 멱등).

@@ -1,0 +1,17 @@
+# tmux helpers — attach with an interactive session/window picker.
+#
+# onboard 의 source 방식은 이 파일을 ~/.bashrc 와 ~/.zshrc 양쪽에서 source 한다.
+# POSIX 함수라 bash / zsh 모두에서 동작한다.
+
+# tmux: pick from the full session/window tree and attach
+tza() ( tmux attach \; choose-tree -Zw )
+
+# tmux: pick a window within one session (defaults to current) and attach
+tzt() (
+  s=${1:-$(tmux display -p '#S' 2>/dev/null)}
+  if [ -n "$s" ]; then
+    tmux attach -t "$s" \; choose-tree -Zw -f "#{==:#{session_name},$s}"
+  else
+    tmux attach \; choose-tree -Zw
+  fi
+)
