@@ -1,17 +1,109 @@
-# tmux helpers — attach with an interactive session/window picker.
+# tmux helpers — attach with tmux's tree picker and an independent view.
 #
 # onboard 의 source 방식은 이 파일을 ~/.bashrc 와 ~/.zshrc 양쪽에서 source 한다.
-# POSIX 함수라 bash / zsh 모두에서 동작한다.
+# bash / zsh 모두에서 동작한다.
 
-# tmux: pick from the full session/window tree and attach
-tza() ( tmux attach \; choose-tree -Zw )
+_tmux_tree_attach() (
+  local scope=$1 session=$2 picker view watcher action filter
 
-# tmux: pick a window within one session (defaults to current) and attach
-tzt() (
-  s=${1:-$(tmux display -p '#S' 2>/dev/null)}
-  if [ -n "$s" ]; then
-    tmux attach -t "$s" \; choose-tree -Zw -f "#{==:#{session_name},$s}"
+  picker="picker-$$-${RANDOM}"
+  view="view-$$-${RANDOM}"
+  picker=$(printf '%s' "$picker" | tr '.: ' '___')
+  view=$(printf '%s' "$view" | tr '.: ' '___')
+
+  watcher='
+    seen=0
+    tries=0
+    while [ "$tries" -lt 200 ]; do
+      state=$(tmux display-message -p -t "$TMUX_PANE" "#{session_attached}:#{pane_in_mode}" 2>/dev/null) || exit
+      case $state in
+        0:*) [ "$seen" -eq 1 ] && exit ;;
+        *:1) seen=1; break ;;
+        *:*) seen=1 ;;
+      esac
+      tries=$((tries + 1))
+      sleep 0.05
+    done
+    [ "$tries" -lt 200 ] || exit
+    while :; do
+      state=$(tmux display-message -p -t "$TMUX_PANE" "#{session_attached}:#{pane_in_mode}" 2>/dev/null) || exit
+      case $state in
+        0:*) exit ;;
+        *:0) break ;;
+      esac
+      sleep 0.05
+    done
+    tries=0
+    while [ "$(tmux show-option -qv -t "'"$picker"'" @picker-selected)" = 1 ] &&
+          [ "$tries" -lt 200 ]; do
+      [ "$(tmux display-message -p -t "'"$picker"'" "#{session_attached}")" -eq 0 ] && exit
+      tries=$((tries + 1))
+      sleep 0.05
+    done
+    tmux detach-client -s "'"$picker"'" 2>/dev/null
+  '
+
+  action="set-option -t \"$picker\" @picker-selected 1 ; run-shell 'target=\"%%\"; client=\"#{client_name}\"; session=\$(tmux display-message -p -t \"\$target\" \"##{session_name}\"); window=\$(tmux display-message -p -t \"\$target\" \"##{window_index}\"); if tmux new-session -d -s \"$view\" -t \"=\$session\" && tmux switch-client -c \"\$client\" -t \"$view:\$window\"; then tmux set-option -t \"$view\" destroy-unattached on; else tmux set-option -t \"$picker\" @picker-selected 0; tmux kill-session -t \"$view\" 2>/dev/null; fi'"
+
+  if [ "$scope" = session ]; then
+    filter="#{==:#{session_name},$session}"
   else
-    tmux attach \; choose-tree -Zw
+    filter="#{!=:#{session_name},$picker}"
   fi
+
+  tmux new-session -s "$picker" "$watcher" \
+    \; choose-tree -Zw -f "$filter" "$action"
+)
+
+# tmux: create or attach a session named parent-current dir
+tzn() (
+  local cwd current parent name
+
+  if [ -n "$TMUX" ]; then
+    printf 'Already in tmux. Use Ctrl-b s to choose a session.\n'
+    return
+  fi
+
+  cwd=${PWD%/}
+  current=${cwd##*/}
+  parent=${cwd%/*}
+  parent=${parent##*/}
+
+  if [ -z "$cwd" ] || [ "$cwd" = / ]; then
+    name=root
+  elif [ -z "$parent" ] || [ "$parent" = "$current" ]; then
+    name=$current
+  else
+    name=${parent}-${current}
+  fi
+
+  name=$(printf '%s' "$name" | tr '.: ' '___')
+  tmux new-session -A -s "$name"
+)
+
+# tmux: pick from the full session/window tree and attach independently
+tza() (
+  if [ -n "$TMUX" ]; then
+    printf 'Already in tmux. Use Ctrl-b s for sessions or Ctrl-b w for windows.\n'
+    return
+  fi
+  _tmux_tree_attach all
+)
+
+# tmux: pick a window within one session and attach independently
+tzt() (
+  local session
+
+  if [ -n "$TMUX" ]; then
+    printf 'Already in tmux. Use Ctrl-b w to choose a window.\n'
+    return
+  fi
+
+  session=${1:-$(tmux display-message -p '#S' 2>/dev/null)}
+  if [ -z "$session" ] || ! tmux has-session -t "=$session" 2>/dev/null; then
+    printf 'tmux session not found: %s\n' "${session:-<none>}" >&2
+    return 1
+  fi
+
+  _tmux_tree_attach session "$session"
 )
