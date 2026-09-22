@@ -1,18 +1,39 @@
-# If migrating these aliases to PowerShell, do NOT use the --teammate-mode
-# tmux is not available on Windows; let Claude Code
+# Claude Code aliases — model tier × permission mode.
+#
+# onboard 의 source 방식은 이 파일을 ~/.bashrc 와 ~/.zshrc 양쪽에서 source 한다.
+# bash / zsh 모두에서 동작한다.
+#
+# 명명 규칙:
+#   1글자 c… 단독 세션 / t… teammate 세션 (tmux 안이면 tmux, 아니면 in-process)
+#   2글자 p… opusplan / o… opus / f… fable / s… sonnet
+#   꼬리  asp… --permission-mode auto / dsp… --dangerously-skip-permissions
+#
+# 컨텍스트: 이 별칭들(sonnet·opus·fable·opusplan)은 그대로 1M 이라 [1m] 을 붙이지 않는다.
+# 붙여야 하는 건 «버전을 특정해서 핀할 때» 다 — claude-opus-4-6 은 200K, claude-opus-4-6[1m]
+# 은 1M. 그리고 zsh 에서 [1m] 은 글롭이라 반드시 따옴표로 감싸야 한다.
+#
+# PowerShell 로 옮길 때는 --teammate-mode 줄을 쓰지 말 것 — Windows 에는 tmux 가 없다.
 
-# claude plan (opus 4.6 — writing cohesion)
-alias cpasp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 CLAUDE_CODE_NO_FLICKER=1 claude --model opus --permission-mode auto'
-alias cpdsp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 CLAUDE_CODE_NO_FLICKER=1 claude --model opus --dangerously-skip-permissions'
-alias tpasp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opus --permission-mode auto'
-alias tpdsp='ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opus --dangerously-skip-permissions'
-
-# claude explorer or executor (sonnet —  well-versed work)
-alias ceasp='CLAUDE_CODE_NO_FLICKER=1 claude --model sonnet --permission-mode auto'
-alias cedsp='CLAUDE_CODE_NO_FLICKER=1 claude --model sonnet --dangerously-skip-permissions'
+# claude plan (opusplan — plan with opus, execute with sonnet)
+alias cpasp='CLAUDE_CODE_NO_FLICKER=1 claude --model opusplan --permission-mode auto'
+alias cpdsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opusplan --dangerously-skip-permissions'
+alias tpasp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opusplan --permission-mode auto'
+alias tpdsp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opusplan --dangerously-skip-permissions'
 
 # claude opus edge (latest opus — coding cohesion)
 alias coasp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --permission-mode auto'
 alias codsp='CLAUDE_CODE_NO_FLICKER=1 claude --model opus --dangerously-skip-permissions'
 alias toasp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opus --permission-mode auto'
 alias todsp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model opus --dangerously-skip-permissions'
+
+# claude fable edge (fable — frontier)
+alias cfasp='CLAUDE_CODE_NO_FLICKER=1 claude --model fable --permission-mode auto'
+alias cfdsp='CLAUDE_CODE_NO_FLICKER=1 claude --model fable --dangerously-skip-permissions'
+alias tfasp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model fable --permission-mode auto'
+alias tfdsp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model fable --dangerously-skip-permissions'
+
+# claude explorer or executor (sonnet — well-versed work)
+alias csasp='CLAUDE_CODE_NO_FLICKER=1 claude --model sonnet --permission-mode auto'
+alias csdsp='CLAUDE_CODE_NO_FLICKER=1 claude --model sonnet --dangerously-skip-permissions'
+alias tsasp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model sonnet --permission-mode auto'
+alias tsdsp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model sonnet --dangerously-skip-permissions'

@@ -70,6 +70,44 @@ Helpers are defined in [`dotfiles.templates/tmux.bashrc.template`](./dotfiles.te
 * `tza` : attach and pick from the full session/window tree
 * `tzt [session]` : attach and pick a window within one session (defaults to current)
 
+# CLAUDE alias
+
+Aliases are defined in [`dotfiles.templates/.claude/.bashrc.template`](./dotfiles.templates/.claude/.bashrc.template). Run `onboard` and pick `ai-config` → `claude` to source them into `~/.bashrc` / `~/.zshrc`.
+
+Names are built from three parts — `<session><tier><permission>`:
+
+| Part | Value | Meaning |
+| --- | --- | --- |
+| session | `c` / `t` | single session / teammate session (`--teammate-mode tmux` inside tmux, `in-process` otherwise) |
+| tier | `p` / `o` / `f` / `s` | `opusplan` / opus / fable / sonnet |
+| permission | `asp` / `dsp` | `--permission-mode auto` / `--dangerously-skip-permissions` |
+
+So `csasp` is a single sonnet session with auto permissions, and `tfdsp` is a fable teammate session that skips permission prompts. Every alias sets `CLAUDE_CODE_NO_FLICKER=1`; the `t*` ones also set `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`.
+
+| | `asp` (auto) | `dsp` (skip) |
+| --- | --- | --- |
+| plan — opusplan | `cpasp` / `tpasp` | `cpdsp` / `tpdsp` |
+| opus | `coasp` / `toasp` | `codsp` / `todsp` |
+| fable | `cfasp` / `tfasp` | `cfdsp` / `tfdsp` |
+| sonnet | `csasp` / `tsasp` | `csdsp` / `tsdsp` |
+
+## 1M context
+
+The aliases pass a plain model name, with no `[1m]` suffix, because all four already resolve to a 1M context window — measured, not assumed:
+
+| `--model` | resolves to | context window |
+| --- | --- | --- |
+| `sonnet` | `claude-sonnet-5` | 1,000,000 |
+| `opus` | `claude-opus-5` | 1,000,000 |
+| `fable` | `claude-fable-5-1` | 1,000,000 |
+| `opusplan` | `claude-sonnet-5` (execute) | 1,000,000 |
+
+`[1m]` earns its place when you pin a **version** instead of an alias — there the default is the small window: `claude-opus-4-6` gets 200K, `claude-opus-4-6[1m]` gets 1M. A version pin is the usual reason a session feels unexpectedly short. It composes with `ANTHROPIC_DEFAULT_OPUS_MODEL`, so `ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-4-6` plus `--model "opus[1m]"` resolves to `claude-opus-4-6[1m]` at 1M.
+
+Two traps if you do write it: `[1m]` is a glob pattern in zsh, so the model argument must be quoted or the command dies with `no matches found`; and 1M is account-gated, so where it isn't granted `[1m]` fails with "not available for your account" while the bare alias would have run. `CLAUDE_CODE_DISABLE_1M_CONTEXT` also turns the suffix off. See [model-config#extended-context-with-1m](https://code.claude.com/docs/en/model-config#extended-context-with-1m).
+
+Porting to PowerShell: drop the `--teammate-mode` line — tmux is not available on Windows.
+
 # GIT alias
 
 Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.gitconfig). Run `onboard` and pick `gitconfig` to apply. Click a section to expand.
