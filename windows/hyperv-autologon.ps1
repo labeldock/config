@@ -198,6 +198,44 @@ function Set-PowerIndex([string]$sub, [string]$setting, [int]$ac, [int]$dc) {
 
 function Get-UserDesktopKey { "Registry::HKEY_USERS\$TargetSid\Control Panel\Desktop" }
 
+function Get-ComputerNames {
+  $base = 'HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName'
+  $active  = Get-RegValue "$base\ActiveComputerName" 'ComputerName'
+  $pending = Get-RegValue "$base\ComputerName" 'ComputerName'
+  if (-not $active) { $active = $env:COMPUTERNAME }
+  if (-not $pending) { $pending = $active }
+  [pscustomobject]@{ Active = $active; Pending = $pending; RenamePending = ($active -ne $pending) }
+}
+
+# 자동 로그인 대상 계정 정보 (SID 기준이라 컴퓨터 이름이 바뀌어도 현재 이름으로 계산된다)
+function Get-AccountInfo {
+  $names = Get-ComputerNames
+  $full = $TargetUser
+  try { $full = (New-Object Security.Principal.SecurityIdentifier($TargetSid)).Translate([Security.Principal.NTAccount]).Value } catch {}
+  $domain, $user = $full -split '\\', 2
+  if (-not $user) { $user = $domain; $domain = $names.Active }
+
+  $isLocal = ($domain -eq $names.Active -or $domain -eq $names.Pending)
+  if ($isLocal) { $domain = $names.Active }
+
+  $isMicrosoft = $false
+  $email = $null
+  try {
+    $local = Get-LocalUser -SID $TargetSid -ErrorAction Stop
+    $isMicrosoft = ("$($local.PrincipalSource)" -eq 'MicrosoftAccount')
+  } catch {}
+  $idKey = "Registry::HKEY_USERS\$TargetSid\Software\Microsoft\IdentityCRL\UserExtendedProperties"
+  if (Test-Path $idKey) {
+    $email = Get-ChildItem $idKey -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty PSChildName
+    if ($email) { $isMicrosoft = $true }
+  }
+
+  [pscustomobject]@{
+    User = $user; Domain = $domain; IsLocal = $isLocal
+    IsMicrosoft = $isMicrosoft; Email = $email; Names = $names
+  }
+}
+
 function Get-SetupState {
   $autoAdmin = Get-RegValue $WinlogonKey 'AutoAdminLogon'
   $userName  = Get-RegValue $WinlogonKey 'DefaultUserName'
@@ -205,11 +243,19 @@ function Get-SetupState {
   $plainPw   = Get-RegValue $WinlogonKey 'DefaultPassword'
   $lsaPw     = [HvAutoLogonNative]::HasSecret('DefaultPassword')
 
+  $acct = Get-AccountInfo
+  $sameUser = ($userName -eq $acct.User -or ($acct.Email -and $userName -eq $acct.Email))
+  $sameHost = ($domain -eq $acct.Domain)
+  $enabled  = ($autoAdmin -eq '1' -and [bool]$userName)
+
   $checks = New-Object System.Collections.Generic.List[object]
   $checks.Add([pscustomobject]@{
-    Ok = ($autoAdmin -eq '1' -and [bool]$userName)
+    Ok = ($enabled -and $sameUser -and $sameHost)
     Label = '자동 로그인 활성화'
-    Detail = if ($userName) { "$domain\$userName" } else { '미설정' }
+    Detail = if (-not $enabled) { '미설정' }
+             elseif (-not $sameHost) { "저장된 컴퓨터 이름 '$domain' ≠ 현재 '$($acct.Domain)' -> 다시 등록 필요" }
+             elseif (-not $sameUser) { "저장된 계정 '$userName' ≠ 현재 '$($acct.User)' -> 다시 등록 필요" }
+             else { "$domain\$userName" }
   })
   $checks.Add([pscustomobject]@{
     Ok = ($lsaPw -or $null -ne $plainPw)
@@ -230,6 +276,13 @@ function Get-SetupState {
     Label = '화면 보호기 해제 시 로그인 요구: 안 함'
     Detail = "ScreenSaverIsSecure=$saver"
   })
+  if ($acct.Names.RenamePending) {
+    $checks.Add([pscustomobject]@{
+      Ok = $false
+      Label = '컴퓨터 이름 변경 반영'
+      Detail = "$($acct.Names.Active) -> $($acct.Names.Pending), 재부팅 대기 중"
+    })
+  }
   return $checks
 }
 
@@ -355,34 +408,86 @@ function Read-PlainPassword([string]$prompt) {
   finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
 }
 
+function Show-AccountGuide($acct) {
+  Show-Header 'Step 3 · 자동 로그인 계정 확인'
+  Write-Host '  왜 비밀번호가 필요한가요?' -ForegroundColor Cyan
+  Write-Host '   부팅할 때 Windows 가 사람 대신 로그인하려면, 이 계정의 "Windows 로그인 비밀번호"를'
+  Write-Host '   지금 한 번 알려줘야 합니다. 비밀번호는 Windows 보호 영역(LSA)에 암호화되어 저장되며'
+  Write-Host '   다시 묻지 않습니다. 이후 부팅/재시작 시 비밀번호 입력 화면 없이 바로 바탕화면이 뜹니다.'
+  Write-Host ''
+  Write-Host '  자동으로 로그인할 계정' -ForegroundColor Cyan
+  Write-Host "   사용자 이름 : $($acct.User)"
+  if ($acct.IsLocal) {
+    Write-Host "   컴퓨터 이름 : $($acct.Domain)  (이 컴퓨터의 현재 이름 - 자동으로 채워짐)"
+  } else {
+    Write-Host "   도메인      : $($acct.Domain)  (회사/학교 도메인 계정)"
+  }
+  Write-Host ''
+  Write-Host '  입력할 비밀번호' -ForegroundColor Cyan
+  if ($acct.IsMicrosoft) {
+    $who = if ($acct.Email) { "Microsoft 계정($($acct.Email))" } else { 'Microsoft 계정' }
+    Write-Host "   $who 의 비밀번호  (웹에서 outlook.com 등에 로그인할 때 쓰는 것)" -ForegroundColor Yellow
+  } elseif ($acct.IsLocal) {
+    Write-Host '   이 컴퓨터에 로그인할 때 입력하던 비밀번호' -ForegroundColor Yellow
+  } else {
+    Write-Host '   도메인 계정 비밀번호' -ForegroundColor Yellow
+  }
+  Write-Host '   * PIN(숫자 4~6자리)이 아닙니다.  * 비밀번호가 없는 계정이면 그냥 Enter.' -ForegroundColor DarkGray
+  Write-Host ''
+}
+
 function Install-AutoLogonCredential {
+  $acct = Get-AccountInfo
+
+  if ($acct.Names.RenamePending) {
+    Show-Header 'Step 3 · 컴퓨터 이름 변경 대기 중'
+    Write-Host "  컴퓨터 이름을 '$($acct.Names.Active)' 에서 '$($acct.Names.Pending)' 로 바꾼 뒤 아직 재부팅하지 않았습니다." -ForegroundColor Yellow
+    Write-Host '  자동 로그인은 컴퓨터 이름을 함께 저장하므로, 재부팅해서 새 이름이 적용된 뒤 이 스크립트를'
+    Write-Host '  다시 실행해 주세요. 컴퓨터 이름은 스크립트가 자동으로 채우므로 직접 입력할 필요가 없습니다.'
+    Write-Host ''
+    if ((Read-Choice '  [B] 지금 재부팅  [Q] 나중에 (종료)' @('B', 'Q')) -eq 'B') { Restart-Computer -Force }
+    Exit-Script
+  }
+
+  $user = $acct.User
+  $domain = $acct.Domain
+  while ($true) {
+    Show-AccountGuide $acct
+    $choice = Read-Choice '  [Y] 이 계정으로 진행  [E] 다른 계정 직접 입력  [Q] 취소' @('Y', 'E', 'Q')
+    if ($choice -eq 'Q') { return $false }
+    if ($choice -eq 'E') {
+      Write-Host ''
+      $answer = Read-Host "  사용자 이름 (Enter = $user)"
+      if ($answer) { $user = $answer }
+      Write-Host "  컴퓨터 이름: 로컬/Microsoft 계정이면 Enter (현재 이 컴퓨터 이름 '$($acct.Names.Active)' 사용)"
+      Write-Host '               회사 도메인 계정일 때만 도메인 이름을 입력하세요.' -ForegroundColor DarkGray
+      $answer = Read-Host "  컴퓨터/도메인 이름 (Enter = $domain)"
+      if ($answer) { $domain = $answer }
+    }
+
+    Write-Host ''
+    Write-Host "  [$domain\$user] 의 Windows 로그인 비밀번호를 입력하세요. (입력해도 화면에 표시되지 않습니다)"
+    $pw = Read-PlainPassword '  비밀번호'
+    if ([HvAutoLogonNative]::ValidateLogon($user, $domain, $pw)) {
+      Write-Check $true '비밀번호 확인 완료'
+      break
+    }
+    Write-Host ''
+    Write-Host '  이 비밀번호로 로그인할 수 없습니다. 흔한 원인:' -ForegroundColor Red
+    Write-Host '   - PIN 을 입력함 (PIN 이 아닌 계정 비밀번호여야 합니다)'
+    Write-Host '   - Caps Lock / 한/영 키 상태'
+    Write-Host '   - Microsoft 계정 비밀번호를 최근에 바꾼 뒤 이 VM 에서 아직 새 비밀번호로 로그인한 적이 없음'
+    if ((Read-Choice '  [R] 다시 입력  [C] 그래도 이 비밀번호로 저장' @('R', 'C')) -eq 'C') { break }
+  }
+
+  Write-Host ''
   $exe = Install-Autologon
   if (-not $exe) { throw 'Autologon 실행 파일을 찾을 수 없습니다.' }
   Write-Host "  Autologon: $exe" -ForegroundColor DarkGray
-
-  $domain, $user = $TargetUser -split '\\', 2
-  if (-not $user) { $user = $domain; $domain = $env:COMPUTERNAME }
-
-  Write-Host ''
-  Write-Host '  자동 로그인에 사용할 계정 비밀번호를 한 번만 입력합니다.'
-  Write-Host '  * Microsoft 계정이면 PIN 이 아니라 Microsoft 계정 비밀번호입니다.' -ForegroundColor DarkYellow
-  $answer = Read-Host "  사용자 이름 [$user]"
-  if ($answer) { $user = $answer }
-  $answer = Read-Host "  도메인/컴퓨터 이름 [$domain]"
-  if ($answer) { $domain = $answer }
-
-  while ($true) {
-    $pw1 = Read-PlainPassword '  비밀번호'
-    $pw2 = Read-PlainPassword '  비밀번호 확인'
-    if ($pw1 -ne $pw2) { Write-Host '  비밀번호가 일치하지 않습니다.' -ForegroundColor Red; continue }
-    if ([HvAutoLogonNative]::ValidateLogon($user, $domain, $pw1)) { break }
-    Write-Host '  이 비밀번호로 로그인 검증에 실패했습니다.' -ForegroundColor Red
-    if ((Read-Choice '  [R] 다시 입력  [C] 그래도 계속' @('R', 'C')) -eq 'C') { break }
-  }
-
-  & $exe $user $domain $pw1 /accepteula | Out-Null
-  $pw1 = $null; $pw2 = $null
+  & $exe $user $domain $pw /accepteula | Out-Null
+  $pw = $null
   [GC]::Collect()
+  return $true
 }
 
 function Install-DisplayKeepAlive {
@@ -405,7 +510,7 @@ function Invoke-Install([object[]]$checks) {
     Write-Host "  자동 로그인은 이미 구성되어 있습니다. ($($checks[0].Detail))"
     $doCredential = (Read-Choice '  비밀번호를 다시 등록할까요? [Y] 예  [N] 아니오' @('Y', 'N')) -eq 'Y'
   }
-  if ($doCredential) { Install-AutoLogonCredential }
+  if ($doCredential -and -not (Install-AutoLogonCredential)) { return }
 
   Install-DisplayKeepAlive
   Write-Host ''
@@ -515,6 +620,10 @@ function Invoke-Step3 {
       }
     } else {
       Write-Host '  아직 설치되지 않은 항목이 있습니다.' -ForegroundColor Yellow
+      if (-not ($checks[0].Ok -and $checks[1].Ok)) {
+        Write-Host '  [I] 설치를 누르면 다음 화면에서 자동 로그인할 계정을 보여주고,' -ForegroundColor DarkGray
+        Write-Host '  그 계정의 Windows 로그인 비밀번호를 한 번만 묻습니다. (컴퓨터 이름은 자동으로 채워집니다)' -ForegroundColor DarkGray
+      }
       Write-Host ''
       switch (Read-Choice '  [I] 설치  [U] 복원  [Q] 종료' @('I', 'U', 'Q')) {
         'I' { Invoke-Install $checks }
