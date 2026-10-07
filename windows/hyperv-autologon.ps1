@@ -182,7 +182,8 @@ function Get-HelloState {
 }
 
 function Get-PowerIndex([string]$sub, [string]$setting) {
-  $out = (& powercfg /q SCHEME_CURRENT $sub $setting 2>$null) -join "`n"
+  # /qh: CONSOLELOCK 같은 숨김 설정은 /q 로는 출력되지 않는다
+  $out = (& powercfg /qh SCHEME_CURRENT $sub $setting 2>$null) -join "`n"
   $hex = [regex]::Matches($out, '0x[0-9a-fA-F]{8}')
   if ($hex.Count -lt 2) { return $null }
   [pscustomobject]@{
