@@ -218,17 +218,19 @@ function Get-AccountInfo {
   $isLocal = ($domain -eq $names.Active -or $domain -eq $names.Pending)
   if ($isLocal) { $domain = $names.Active }
 
+  # 계정 종류는 Get-LocalUser 의 PrincipalSource 로 판단한다.
+  # (로컬 계정이라도 Store/Office 등 앱에만 MS 계정을 연결하면 IdentityCRL 에 이메일이 남으므로 보조로만 사용)
   $isMicrosoft = $false
   $email = $null
+  $idKey = "Registry::HKEY_USERS\$TargetSid\Software\Microsoft\IdentityCRL\UserExtendedProperties"
+  $crlEmail = Get-ChildItem $idKey -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty PSChildName
   try {
     $local = Get-LocalUser -SID $TargetSid -ErrorAction Stop
     $isMicrosoft = ("$($local.PrincipalSource)" -eq 'MicrosoftAccount')
-  } catch {}
-  $idKey = "Registry::HKEY_USERS\$TargetSid\Software\Microsoft\IdentityCRL\UserExtendedProperties"
-  if (Test-Path $idKey) {
-    $email = Get-ChildItem $idKey -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty PSChildName
-    if ($email) { $isMicrosoft = $true }
+  } catch {
+    $isMicrosoft = [bool]$crlEmail
   }
+  if ($isMicrosoft) { $email = $crlEmail }
 
   [pscustomobject]@{
     User = $user; Domain = $domain; IsLocal = $isLocal
@@ -408,6 +410,24 @@ function Read-PlainPassword([string]$prompt) {
   finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
 }
 
+# 계정 종류 안내 - Windows Hello 를 꺼도 계정 종류(Microsoft/로컬)는 바뀌지 않는다는 점을 명시
+function Write-AccountType($acct) {
+  Write-Host '  이 계정의 종류' -ForegroundColor Cyan
+  if ($acct.IsMicrosoft) {
+    $mail = if ($acct.Email) { " ($($acct.Email))" } else { '' }
+    Write-Host "   Microsoft 계정$mail" -ForegroundColor Yellow
+    Write-Host '   - Windows Hello(PIN)를 꺼도 Microsoft 계정 그대로입니다. 로컬 계정으로 바뀌지 않습니다.'
+    Write-Host '   - Hello 를 끄면 로그인 화면에서 PIN 대신 "Microsoft 계정 비밀번호"를 입력하게 됩니다.'
+  } elseif ($acct.IsLocal) {
+    Write-Host '   로컬 계정 (이 컴퓨터에만 있는 계정)' -ForegroundColor Yellow
+    Write-Host '   - Hello 를 끄면 로그인 화면에서 PIN 대신 이 계정의 로컬 비밀번호를 입력하게 됩니다.'
+  } else {
+    Write-Host "   도메인 계정 ($($acct.Domain))" -ForegroundColor Yellow
+  }
+  Write-Host '   직접 확인: 설정 > 계정 > 사용자 정보 (이메일이 보이면 Microsoft 계정, "로컬 계정"이면 로컬)' -ForegroundColor DarkGray
+  Write-Host ''
+}
+
 function Show-AccountGuide($acct) {
   Show-Header 'Step 3 · 자동 로그인 계정 확인'
   Write-Host '  왜 비밀번호가 필요한가요?' -ForegroundColor Cyan
@@ -423,10 +443,10 @@ function Show-AccountGuide($acct) {
     Write-Host "   도메인      : $($acct.Domain)  (회사/학교 도메인 계정)"
   }
   Write-Host ''
+  Write-AccountType $acct
   Write-Host '  입력할 비밀번호' -ForegroundColor Cyan
   if ($acct.IsMicrosoft) {
-    $who = if ($acct.Email) { "Microsoft 계정($($acct.Email))" } else { 'Microsoft 계정' }
-    Write-Host "   $who 의 비밀번호  (웹에서 outlook.com 등에 로그인할 때 쓰는 것)" -ForegroundColor Yellow
+    Write-Host '   Microsoft 계정 비밀번호  (account.microsoft.com / outlook.com 에 로그인할 때 쓰는 것)' -ForegroundColor Yellow
   } elseif ($acct.IsLocal) {
     Write-Host '   이 컴퓨터에 로그인할 때 입력하던 비밀번호' -ForegroundColor Yellow
   } else {
@@ -554,6 +574,7 @@ function Invoke-Step1 {
 function Invoke-Step2 {
   while ($true) {
     Show-Header 'Step 2 · Windows Hello 확인'
+    Write-AccountType (Get-AccountInfo)
     $hello = Get-HelloState
     Write-Check (-not $hello.HelloOnly) '"Microsoft 계정에 Windows Hello 로그인만 허용" 꺼짐'
     Write-Check (-not $hello.Pin)       'PIN(Windows Hello) 미등록'
