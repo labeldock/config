@@ -9,8 +9,9 @@
    [3] ed25519 키 생성        - ~\.ssh\id_ed25519 (주석: 사용자@이 컴퓨터 이름)
    [4] 접속 허용 키 관리      - authorized_keys 목록/추가/제거
 
-  키는 화면에 "앞 3자리 + 마스킹 + 뒤 3자리" 로만 표시하고, 어느 PC(호스트)의 키인지 함께 보여준다.
-  관리자 계정은 Windows OpenSSH 기본 설정상 C:\ProgramData\ssh\administrators_authorized_keys 를 쓴다.
+  키는 화면에 "앞 3자리 + ****** + 뒤 3자리 + 사용자(주석)" 로만 표시한다. 예) AAA******k2q labeldock@gmail.com
+  sshd_config 의 AuthorizedKeysFile 을 읽어 sshd 가 실제로 읽는 키 파일과 적용 여부를 보여준다.
+  (관리자 계정은 기본 설정상 C:\ProgramData\ssh\administrators_authorized_keys 를 쓴다)
 
 .EXAMPLE
   ssh-server.cmd 더블클릭
@@ -25,7 +26,6 @@ param(
 $ErrorActionPreference = 'Stop'
 $SshDataDir   = Join-Path $env:ProgramData 'ssh'
 $SshdConfig   = Join-Path $SshDataDir 'sshd_config'
-$AdminKeys    = Join-Path $SshDataDir 'administrators_authorized_keys'
 $FirewallRule = 'OpenSSH-Server-In-TCP'
 $SidSystem    = 'S-1-5-18'
 $SidAdmins    = 'S-1-5-32-544'
@@ -107,9 +107,10 @@ function Exit-Script {
 # ---------------------------------------------------------------------------
 # 키 표시 (앞 3자리 + 마스킹 + 뒤 3자리) / 파싱
 # ---------------------------------------------------------------------------
-function Format-MaskedKey([string]$type, [string]$body) {
-  if ($body.Length -le 6) { return "$type ***" }
-  return '{0} {1}{2}{3}' -f $type, $body.Substring(0, 3), ('*' * 10), $body.Substring($body.Length - 3)
+# ed25519 키 본문은 항상 AAA 로 시작한다 (키 종류 표시로 충분)
+function Format-MaskedKey([string]$body) {
+  if ($body.Length -le 6) { return '******' }
+  return '{0}******{1}' -f $body.Substring(0, 3), $body.Substring($body.Length - 3)
 }
 
 $KeyLinePattern = '^(?:(?<opts>.+?)\s+)?(?<type>ssh-ed25519|ssh-rsa|ssh-dss|ecdsa-sha2-nistp\d+|sk-[\w.@-]+)\s+(?<body>[A-Za-z0-9+/]+={0,2})(?:\s+(?<comment>.*))?$'
@@ -117,25 +118,18 @@ $KeyLinePattern = '^(?:(?<opts>.+?)\s+)?(?<type>ssh-ed25519|ssh-rsa|ssh-dss|ecds
 function ConvertFrom-KeyLine([string]$line) {
   $m = [regex]::Match($line.Trim(), $KeyLinePattern)
   if (-not $m.Success) { return $null }
-  $comment = $m.Groups['comment'].Value.Trim()
-  $user = ''; $hostName = ''
-  if ($comment -match '^(?<u>[^@\s]*)@(?<h>\S+)') { $user = $Matches['u']; $hostName = $Matches['h'] }
   [pscustomobject]@{
     Type = $m.Groups['type'].Value; Body = $m.Groups['body'].Value
-    Options = $m.Groups['opts'].Value; Comment = $comment
-    User = $user; Host = $hostName
+    Options = $m.Groups['opts'].Value; Comment = $m.Groups['comment'].Value.Trim()
   }
 }
 
+# 예) abc******k2q labeldock@gmail.com  /  cds******dfv (경고:사용자미입력)
 function Write-KeyRow([string]$prefix, $key) {
-  Write-Host $prefix -NoNewline
-  Write-Host ' 호스트: ' -ForegroundColor DarkGray -NoNewline
-  if ($key.Host) { Write-Host ('{0,-20}' -f $key.Host) -ForegroundColor White -NoNewline }
-  else           { Write-Host ('{0,-20}' -f '(미상)') -ForegroundColor Yellow -NoNewline }
-  Write-Host ' 사용자: ' -ForegroundColor DarkGray -NoNewline
-  Write-Host ('{0,-12}' -f $(if ($key.User) { $key.User } else { '-' })) -NoNewline
-  Write-Host " $(Format-MaskedKey $key.Type $key.Body)" -ForegroundColor DarkCyan
-  if (-not $key.Host -and $key.Comment) { Write-Host "        주석: $($key.Comment)" -ForegroundColor DarkGray }
+  Write-Host "$prefix " -NoNewline
+  Write-Host (Format-MaskedKey $key.Body) -ForegroundColor DarkCyan -NoNewline
+  if ($key.Comment) { Write-Host " $($key.Comment)" }
+  else              { Write-Host ' (경고:사용자미입력)' -ForegroundColor Yellow }
   if ($key.Options) { Write-Host "        옵션: $($key.Options)" -ForegroundColor DarkGray }
 }
 
@@ -164,18 +158,63 @@ function Test-TargetIsAdmin {
   } catch { return $true }
 }
 
-# 기본 sshd_config 는 관리자 그룹을 administrators_authorized_keys 로 보낸다
-function Test-AdminKeysMatch {
-  if (-not (Test-Path $SshdConfig)) { return $true }
-  $active = Get-Content $SshdConfig | Where-Object { $_ -notmatch '^\s*#' }
-  return [bool]($active | Where-Object { $_ -match '^\s*Match\s+Group\s+administrators' })
+function Resolve-SshdPath([string]$p) {
+  $p = $p.Replace('__PROGRAMDATA__', $env:ProgramData).Replace('%h', $ProfileDir).Replace('%u', $TargetUserName).Replace('%%', '%')
+  $p = $p.Replace('/', '\')
+  if (-not [IO.Path]::IsPathRooted($p)) { $p = Join-Path $ProfileDir $p }
+  return $p
 }
 
-function Get-AuthorizedKeysPath {
-  if ((Test-TargetIsAdmin) -and (Test-AdminKeysMatch)) {
-    return [pscustomobject]@{ Path = $AdminKeys; IsAdminFile = $true }
+# sshd_config 의 AuthorizedKeysFile 설정으로 sshd 가 읽는 키 파일 목록을 만든다.
+# Windows 기본값: 일반 사용자는 ~\.ssh\authorized_keys,
+#                 관리자 그룹은 "Match Group administrators" 블록의 administrators_authorized_keys
+function Get-SshdKeyFiles {
+  $global = @('.ssh/authorized_keys')
+  $admin  = @('__PROGRAMDATA__/ssh/administrators_authorized_keys')
+  if (Test-Path $SshdConfig) {
+    $global = @('.ssh/authorized_keys', '.ssh/authorized_keys2')   # 설정이 없을 때 OpenSSH 기본값
+    $admin = @()
+    $match = $null
+    foreach ($raw in Get-Content $SshdConfig) {
+      $line = $raw.Trim()
+      if (-not $line -or $line.StartsWith('#')) { continue }
+      if ($line -match '^Match\s+(.*)$') { $match = $Matches[1]; continue }
+      if ($line -match '^AuthorizedKeysFile\s+(.+)$') {
+        $paths = @($Matches[1].Trim() -split '\s+')
+        if (-not $match) { $global = $paths }
+        elseif ($match -match '^Group\s+administrators\s*$') { $admin = $paths }
+      }
+    }
   }
-  return [pscustomobject]@{ Path = (Join-Path $UserSshDir 'authorized_keys'); IsAdminFile = $false }
+
+  $adminApplies = ($admin.Count -gt 0) -and (Test-TargetIsAdmin)
+  $files = New-Object System.Collections.Generic.List[object]
+  foreach ($a in $admin) {
+    $files.Add([pscustomobject]@{ Path = (Resolve-SshdPath $a); Scope = '관리자 그룹용'; Applies = $adminApplies; IsAdminFile = $true })
+  }
+  foreach ($g in $global) {
+    $files.Add([pscustomobject]@{ Path = (Resolve-SshdPath $g); Scope = '일반 사용자용'; Applies = (-not $adminApplies); IsAdminFile = $false })
+  }
+  return $files
+}
+
+# 이 스크립트가 추가/제거하는 파일 = 대상 계정에 적용되는 첫 번째 파일
+function Get-AuthorizedKeysPath {
+  return @(Get-SshdKeyFiles | Where-Object { $_.Applies })[0]
+}
+
+function Write-SshdKeyFiles {
+  Write-Host '  sshd 가 읽는 키 파일 (sshd_config 기준)' -ForegroundColor Cyan
+  foreach ($f in Get-SshdKeyFiles) {
+    if ($f.Applies) { Write-Host '   [적용] ' -ForegroundColor Green -NoNewline }
+    else            { Write-Host '   [무시] ' -ForegroundColor DarkGray -NoNewline }
+    $count = if (Test-Path $f.Path) { "키 $(@(Get-AuthorizedKeys $f.Path).Count)개" } else { '파일 없음' }
+    Write-Host $f.Path -NoNewline
+    Write-Host "  ($($f.Scope), $count)" -ForegroundColor DarkGray
+  }
+  if (Test-TargetIsAdmin) {
+    Write-Host '   * 대상 계정이 관리자라 ~\.ssh\authorized_keys 는 무시되고 관리자 그룹용 파일만 읽습니다.' -ForegroundColor DarkGray
+  }
 }
 
 function Read-KeyFileLines([string]$path) {
@@ -294,7 +333,7 @@ function New-Ed25519Key {
   if (-not (Test-Path $UserSshDir)) { New-Item -ItemType Directory -Path $UserSshDir -Force | Out-Null }
   $comment = "$TargetUserName@$env:COMPUTERNAME"
   Write-Host ''
-  Write-Host "  키 주석(호스트 표시): $comment" -ForegroundColor Cyan
+  Write-Host "  키 주석(사용자 표시): $comment" -ForegroundColor Cyan
   Write-Host '  암호(passphrase)를 두 번 묻습니다. 비워 두려면 Enter 두 번.' -ForegroundColor DarkGray
   Write-Host ''
   & $keygen -t ed25519 -C $comment -f $UserKeyPath
@@ -344,14 +383,11 @@ function Add-AuthorizedKeyLines([string[]]$candidates, $target) {
       if (-not $valid) { Write-Host '  [건너뜀] 손상된 공개키입니다.' -ForegroundColor Red; continue }
     }
 
-    # 어느 PC 의 키인지 알 수 있게 주석에 호스트가 없으면 입력받는다
-    if (-not $k.Host) {
+    # 누구의 키인지 알 수 있게 주석(사용자)이 없으면 입력받는다 (건너뛰면 목록에 경고 표시)
+    if (-not $k.Comment) {
       Write-Host ''
-      Write-Host "  이 키에는 호스트 정보가 없습니다: $(Format-MaskedKey $k.Type $k.Body)" -ForegroundColor Yellow
-      if ($k.Comment) { Write-Host "  기존 주석: $($k.Comment)" -ForegroundColor DarkGray }
-      do { $hostName = (Read-Host '  이 키를 쓰는 PC(호스트) 이름').Trim() -replace '\s', '-' } while (-not $hostName)
-      $who = if ($k.Comment) { $k.Comment -replace '\s', '-' } else { 'key' }
-      $k.Comment = "$who@$hostName"; $k.User = $who; $k.Host = $hostName
+      Write-Host "  이 키에는 사용자 정보가 없습니다: $(Format-MaskedKey $k.Body)" -ForegroundColor Yellow
+      $k.Comment = (Read-Host '  사용자 (예: labeldock@gmail.com, Enter = 건너뜀)').Trim() -replace '\s', '-'
     }
 
     $line = (@($k.Options, $k.Type, $k.Body, $k.Comment) | Where-Object { $_ }) -join ' '
@@ -377,7 +413,8 @@ function Remove-AuthorizedKey($target, $keys) {
   $k = $keys[$n - 1]
   Write-Host ''
   Write-KeyRow '  ' $k
-  if ((Read-Choice "  호스트 '$(if ($k.Host) { $k.Host } else { '미상' })' 의 키를 제거할까요? [Y] 예  [N] 아니오" @('Y', 'N')) -ne 'Y') { return }
+  $who = if ($k.Comment) { $k.Comment } else { '사용자미입력' }
+  if ((Read-Choice "  '$who' 의 키를 제거할까요? [Y] 예  [N] 아니오" @('Y', 'N')) -ne 'Y') { return }
   $lines = @(Read-KeyFileLines $target.Path)
   $kept = @(for ($i = 0; $i -lt $lines.Count; $i++) { if ($i -ne $k.LineIndex) { $lines[$i] } })
   Write-KeyFileLines $target.Path $kept $target.IsAdminFile
@@ -389,10 +426,9 @@ function Invoke-KeyManager {
   while ($true) {
     Show-Header '접속 허용 키 (authorized_keys)'
     $target = Get-AuthorizedKeysPath
-    Write-Host "  적용 파일: $($target.Path)" -ForegroundColor DarkGray
-    if ($target.IsAdminFile) {
-      Write-Host '  * 관리자 계정이라 Windows OpenSSH 는 ~\.ssh\authorized_keys 대신 이 파일을 읽습니다.' -ForegroundColor DarkGray
-    }
+    Write-SshdKeyFiles
+    Write-Host ''
+    Write-Host "  편집 중: $($target.Path)" -ForegroundColor Cyan
     Write-Host "  아래 키를 가진 PC 는 비밀번호 없이 $TargetUserName@$env:COMPUTERNAME 로 접속할 수 있습니다." -ForegroundColor DarkGray
     Write-Host ''
 
@@ -401,21 +437,15 @@ function Invoke-KeyManager {
     for ($i = 0; $i -lt $keys.Count; $i++) { Write-KeyRow ('  [{0}]' -f ($i + 1)) $keys[$i] }
     Write-Host ''
 
-    $keysMenu = @('A', 'F', 'M', 'B')
-    $menu = '  [A] 붙여넣기로 추가  [F] .pub 파일로 추가  [M] 이 PC 키 추가  '
+    $keysMenu = @('A', 'M', 'B')
+    $menu = '  [A] 붙여넣기로 추가  [M] 이 PC 키 추가  '
     if ($keys.Count) { $keysMenu += 'D'; $menu += '[D] 제거  ' }
     $menu += '[B] 뒤로'
 
     switch (Read-Choice $menu $keysMenu) {
       'A' {
-        Write-Host '  다른 PC 의 공개키 한 줄(ssh-ed25519 AAAA... 사용자@호스트)을 붙여 넣으세요.' -ForegroundColor DarkGray
+        Write-Host '  다른 PC 의 공개키 한 줄(ssh-ed25519 AAAA... 사용자)을 붙여 넣으세요.' -ForegroundColor DarkGray
         Add-AuthorizedKeyLines @((Read-Host '  공개키')) $target
-        Wait-Enter
-      }
-      'F' {
-        $path = (Read-Host '  .pub 파일 경로').Trim().Trim('"')
-        if (Test-Path $path) { Add-AuthorizedKeyLines @(Get-Content $path) $target }
-        else { Write-Host '  파일이 없습니다.' -ForegroundColor Red }
         Wait-Enter
       }
       'M' {
@@ -444,9 +474,11 @@ function Invoke-Main {
     Write-Check ([bool]$svc) 'OpenSSH Server 설치'
     Write-Check ($svc -and $svc.Status -eq 'Running') 'sshd 실행 중' $(if ($svc) { "시작 유형: $($svc.StartType)" } else { '' })
     Write-Check ($rule -and "$($rule.Enabled)" -eq 'True') '방화벽 22/TCP 허용'
-    if ($own) { Write-Check $true 'ed25519 키' "$(Format-MaskedKey $own.Type $own.Body)  $($own.Comment)" }
+    if ($own) { Write-Check $true 'ed25519 키' "$(Format-MaskedKey $own.Body) $($own.Comment)" }
     else      { Write-Check $false 'ed25519 키' '없음' }
     Write-Check ($keyCount -gt 0) "접속 허용 키 $keyCount 개" (Split-Path $target.Path -Leaf)
+    Write-Host ''
+    Write-SshdKeyFiles
 
     if ($svc -and $svc.Status -eq 'Running') {
       Write-Host ''
