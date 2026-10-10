@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Scoop 을 설치하고, 체크박스로 고른 개발 도구(pwsh, gh, GitHub Desktop, psmux, mise, make)를 Scoop 으로 설치한다.
+  Scoop 을 설치하고, 체크박스로 고른 개발 도구(pwsh, gh, GitHub Desktop, psmux, mise, make, nano)를 Scoop 으로 설치한다.
 
 .DESCRIPTION
   1. Scoop 확인 - 없으면 설치 (일반 사용자 권한 권장)
@@ -28,6 +28,7 @@ $Tools = @(
   [pscustomobject]@{ Name = 'psmux';  Bucket = 'psmux';  Command = 'psmux'; Label = 'psmux';           Desc = 'Windows 용 tmux (psmux 버킷)' }
   [pscustomobject]@{ Name = 'mise';   Bucket = 'main';   Command = 'mise';  Label = 'mise';            Desc = '런타임/툴 버전 매니저' }
   [pscustomobject]@{ Name = 'make';   Bucket = 'main';   Command = 'make';  Label = 'make';            Desc = 'GNU make' }
+  [pscustomobject]@{ Name = 'nano';   Bucket = 'main';   Command = 'nano';  Label = 'nano';            Desc = '터미널 텍스트 에디터' }
 )
 
 # ---------------------------------------------------------------------------
