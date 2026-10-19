@@ -43,7 +43,7 @@ _tmux_tree_attach() (
     tmux detach-client -s "'"$picker"'" 2>/dev/null
   '
 
-  action="set-option -t \"$picker\" @picker-selected 1 ; run-shell 'target=\"%%\"; client=\"#{client_name}\"; session=\$(tmux display-message -p -t \"\$target\" \"##{session_name}\"); window=\$(tmux display-message -p -t \"\$target\" \"##{window_index}\"); if tmux new-session -d -s \"$view\" -t \"=\$session\" && tmux switch-client -c \"\$client\" -t \"$view:\$window\"; then tmux set-option -t \"$view\" destroy-unattached on; else tmux set-option -t \"$picker\" @picker-selected 0; tmux kill-session -t \"$view\" 2>/dev/null; fi'"
+  action="set-option -t \"$picker\" @picker-selected 1 ; run-shell 'target=\"%%\"; client=\"#{client_name}\"; session=\$(tmux display-message -p -t \"\$target\" \"##{session_name}\"); window=\$(tmux display-message -p -t \"\$target\" \"##{window_index}\"); path=\$(tmux display-message -p -t \"\$target\" \"##{session_path}\"); if tmux new-session -d -s \"$view\" -t \"=\$session\" -c \"\$path\" &&tmux switch-client -c \"\$client\" -t \"$view:\$window\"; then tmux set-option -t \"$view\" destroy-unattached on; else tmux set-option -t \"$picker\" @picker-selected 0; tmux kill-session -t \"$view\" 2>/dev/null; fi'"
 
   if [ "$scope" = session ]; then
     filter="#{==:#{session_name},$session}"
@@ -51,6 +51,8 @@ _tmux_tree_attach() (
     filter="#{!=:#{session_name},$picker}"
   fi
 
+  # view 세션은 -c 로 원본 세션의 session_path 를 물려받는다. 없으면 tzt/tza 를
+  # 실행한 cwd 가 기본 디렉터리가 되어 split/new-window 가 엉뚱한 곳에서 열린다.
   tmux new-session -s "$picker" "$watcher" \
     \; choose-tree -Zw -f "$filter" "$action"
 )
