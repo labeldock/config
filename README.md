@@ -123,9 +123,9 @@ Copying from Claude Code takes one of three paths, and "sometimes works, sometim
 The `tmux` and `claude` items fix the two causes we hit:
 
 * **tmux drops OSC 52.** [`.tmux.conf`](./dotfiles.templates/.tmux.conf) ([#7](./README-TMUX-CONF.md#7-clipboard-osc-52), [#8](./README-TMUX-CONF.md#8-mouse)) sets `set-clipboard on`, marks every outer terminal as clipboard-capable, and turns `mouse on` for fullscreen selection.
-* **Stale SSH variables in tmux.** A pane keeps the environment it was born with. Attach over SSH to a session you started locally (or the reverse) and Claude picks the wrong path. `.tmux.conf` adds `SSH_CLIENT SSH_TTY WAYLAND_DISPLAY` to `update-environment`, and the `claude` function in [`.claude/.bashrc.template`](./dotfiles.templates/.claude/.bashrc.template) pulls the fresh values from tmux right before launching. A Claude that is already running keeps the old values, so restart it after switching machines.
+* **Stale SSH variables in tmux.** A pane keeps the environment it was born with. Attach over SSH to a session you started locally (or the reverse) and Claude picks the wrong path. `.tmux.conf` adds `SSH_CLIENT SSH_TTY WAYLAND_DISPLAY` to `update-environment` ([#9](./README-TMUX-CONF.md#9-update-environment-ssh--display)), so panes opened after the attach get fresh values. After switching machines, start Claude in a new pane.
 
-Run `clipcheck` anywhere to see which path applies and to send a test string over OSC 52; paste to confirm.
+Run `clipcheck` anywhere to see which path applies, whether the current pane's SSH variables are stale, and to send a test string over OSC 52; paste to confirm.
 
 Outer terminal checklist:
 

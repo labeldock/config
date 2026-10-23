@@ -39,36 +39,11 @@ alias tsasp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 cla
 alias tsdsp='CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 CLAUDE_CODE_NO_FLICKER=1 claude --teammate-mode $([ -n "$TMUX" ] && echo tmux || echo in-process) --model sonnet --dangerously-skip-permissions'
 
 # ── clipboard ────────────────────────────────────────────────────────────────
-# Claude Code 의 복사 경로: 로컬이면 pbcopy / wl-copy·xclip·xsel / Set-Clipboard,
-# SSH 면 OSC 52, tmux 안이면 tmux 버퍼에도 쓴다. SSH 여부는 SSH_CONNECTION 등으로 판단한다.
-#
-# tmux pane 의 셸은 처음 만들어질 때의 환경을 그대로 들고 있다. 로컬에서 만든 세션에
-# 나중에 SSH 로 attach 하면(또는 반대로) 변수가 낡아서 Claude Code 가 경로를 잘못 고른다.
-# 그래서 claude 를 띄우기 직전에 tmux 세션의 최신 값(.tmux.conf 의 update-environment)을
-# 가져온다. 이미 떠 있는 claude 는 못 고치니, 머신을 바꿔 attach 했으면 claude 를 다시 띄울 것.
-_claude_sync_tmux_env() {
-  [ -n "$TMUX" ] || return 0
-  local line
-  while IFS= read -r line; do
-    case $line in
-      -*) unset "${line#-}" ;;
-      *=*) export "$line" ;;
-    esac
-  done <<EOF_TMUX_ENV
-$(tmux show-environment 2>/dev/null | grep -E '^-?(SSH_CONNECTION|SSH_CLIENT|SSH_TTY|DISPLAY|WAYLAND_DISPLAY|XAUTHORITY)(=|$)')
-EOF_TMUX_ENV
-}
-
-claude() {
-  _claude_sync_tmux_env
-  command claude "$@"
-}
-
-# clipcheck — 지금 이 자리에서 클립보드가 어느 경로로 가는지 보여주고,
+# clipcheck — 지금 이 자리에서 Claude Code 의 복사가 어느 경로로 가는지 보여주고,
 # OSC 52 로 테스트 문자열을 보낸다. 실행 후 아무 데나 붙여넣어 확인.
+# 셸 변수는 읽기만 하고 바꾸지 않는다.
 clipcheck() {
-  local text b64 tool
-  _claude_sync_tmux_env
+  local text b64 tool tmux_ssh
 
   if [ -n "$SSH_CONNECTION$SSH_CLIENT$SSH_TTY" ]; then
     printf 'session  : SSH  → Claude Code 는 OSC 52 로 복사\n'
@@ -85,6 +60,13 @@ clipcheck() {
       "$(tmux show -sv set-clipboard)" "$(tmux show -gv mouse)" "$(tmux show -gv allow-passthrough)"
     [ "$(tmux show -sv set-clipboard)" = on ] ||
       printf '           ⚠ set-clipboard 가 on 이 아니면 앱이 보낸 OSC 52 를 tmux 가 버린다\n'
+    tmux_ssh=$(tmux show-environment SSH_CONNECTION 2>/dev/null)
+    case $tmux_ssh in
+      SSH_CONNECTION=*) [ -n "$SSH_CONNECTION" ] || tmux_ssh=stale ;;
+      *) [ -z "$SSH_CONNECTION" ] || tmux_ssh=stale ;;
+    esac
+    [ "$tmux_ssh" != stale ] ||
+      printf '           ⚠ 이 창의 SSH 변수가 지금 attach 한 상태와 다르다 — 새 창에서 claude 를 띄울 것\n'
   fi
   printf 'terminal : TERM_PROGRAM=%s TERM=%s\n' "${TERM_PROGRAM:-?}" "$TERM"
 

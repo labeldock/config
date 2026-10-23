@@ -155,7 +155,7 @@ set -ga update-environment 'SSH_CLIENT SSH_TTY WAYLAND_DISPLAY'
 pane 의 셸은 처음 만들어질 때의 환경 변수를 그대로 들고 있습니다. 로컬 화면에서 만든 세션에 나중에 SSH 로 붙으면, 그 셸은 여전히 로컬이라고 알고 있습니다. 반대의 경우도 마찬가지입니다. Claude Code 는 SSH 변수가 있으면 OSC 52 로, 없으면 `pbcopy` 같은 로컬 명령으로 복사합니다. 그래서 변수가 낡으면 엉뚱한 머신의 클립보드에 복사합니다. tmux 기본 목록에는 `SSH_CONNECTION` 과 `DISPLAY` 만 있고 `SSH_CLIENT`, `SSH_TTY`, `WAYLAND_DISPLAY` 는 빠져 있습니다.
 
 **해결 방법**
-attach 할 때 이 변수들도 지금 붙은 클라이언트 기준으로 세션 환경에 갱신합니다. 클라이언트에 없는 변수는 "제거됨" 으로 표시됩니다. 새로 여는 pane 은 갱신된 값을 받고, 이미 열린 셸은 [`.claude/.bashrc.template`](./dotfiles.templates/.claude/.bashrc.template) 의 `claude` 함수가 실행 직전에 이 값을 읽어 와 맞춥니다.
+attach 할 때 이 변수들도 지금 붙은 클라이언트 기준으로 세션 환경에 갱신합니다. 클라이언트에 없는 변수는 "제거됨" 으로 표시됩니다. 새로 여는 pane 은 갱신된 값을 받습니다. 이미 열려 있던 셸은 예전 값을 그대로 들고 있으므로, 다른 머신에서 다시 붙었다면 Claude 는 새 pane 에서 띄웁니다. `clipcheck` 을 실행하면 지금 창의 값이 낡았는지 알려 줍니다.
 
 ## `#10` copy-mode `v` / `y`
 
