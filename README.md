@@ -70,6 +70,8 @@ Helpers are defined in [`dotfiles.templates/tmux.bashrc.template`](./dotfiles.te
 * `tza` : attach and pick from the full session/window tree
 * `tzt [session]` : attach and pick a window within one session (defaults to current)
 
+Every setting in [`.tmux.conf`](./dotfiles.templates/.tmux.conf) carries a `README-TMUX-CONF#N` tag. [README-TMUX-CONF.md](./README-TMUX-CONF.md) explains why each one was added and what it fixes.
+
 # CLAUDE alias
 
 Aliases are defined in [`dotfiles.templates/.claude/.bashrc.template`](./dotfiles.templates/.claude/.bashrc.template). Run `onboard` and pick `ai-config` → `claude` to source them into `~/.bashrc` / `~/.zshrc`.
@@ -120,7 +122,7 @@ Copying from Claude Code takes one of three paths, and "sometimes works, sometim
 
 The `tmux` and `claude` items fix the two causes we hit:
 
-* **tmux drops OSC 52.** [`.tmux.conf`](./dotfiles.templates/.tmux.conf) sets `set-clipboard on`, marks every outer terminal as clipboard-capable, and turns `mouse on` for fullscreen selection.
+* **tmux drops OSC 52.** [`.tmux.conf`](./dotfiles.templates/.tmux.conf) ([#7](./README-TMUX-CONF.md#7-clipboard-osc-52), [#8](./README-TMUX-CONF.md#8-mouse)) sets `set-clipboard on`, marks every outer terminal as clipboard-capable, and turns `mouse on` for fullscreen selection.
 * **Stale SSH variables in tmux.** A pane keeps the environment it was born with. Attach over SSH to a session you started locally (or the reverse) and Claude picks the wrong path. `.tmux.conf` adds `SSH_CLIENT SSH_TTY WAYLAND_DISPLAY` to `update-environment`, and the `claude` function in [`.claude/.bashrc.template`](./dotfiles.templates/.claude/.bashrc.template) pulls the fresh values from tmux right before launching. A Claude that is already running keeps the old values, so restart it after switching machines.
 
 Run `clipcheck` anywhere to see which path applies and to send a test string over OSC 52; paste to confirm.
