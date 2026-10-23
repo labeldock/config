@@ -12,3 +12,8 @@ window-padding-y = 10
 
 # Cursor
 cursor-style = block
+
+# Clipboard — tmux / SSH 안의 앱(Claude Code 등)이 OSC 52 로 복사할 수 있게 한다.
+# 쓰기는 허용, 읽기(앱이 내 클립보드를 엿보는 것)는 매번 묻는다.
+clipboard-write = allow
+clipboard-read = ask

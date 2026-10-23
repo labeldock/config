@@ -108,6 +108,33 @@ Two traps if you do write it: `[1m]` is a glob pattern in zsh, so the model argu
 
 Porting to PowerShell: drop the `--teammate-mode` line — tmux is not available on Windows.
 
+## Clipboard
+
+Copying from Claude Code takes one of three paths, and "sometimes works, sometimes doesn't" almost always means the wrong one was picked or one hop dropped it:
+
+| Where Claude runs | Path | What must be true |
+| --- | --- | --- |
+| local macOS / Linux / Windows | `pbcopy` / `wl-copy`·`xclip`·`xsel` / `Set-Clipboard` | the tool is installed (`xclip` or `wl-clipboard` on Linux) |
+| over SSH | OSC 52 escape sequence | the outer terminal accepts OSC 52 |
+| inside tmux | also the tmux buffer, OSC 52 forwarded by tmux | `set-clipboard on` — tmux's default `external` silently drops OSC 52 sent by apps |
+
+The `tmux` and `claude` items fix the two causes we hit:
+
+* **tmux drops OSC 52.** [`.tmux.conf`](./dotfiles.templates/.tmux.conf) sets `set-clipboard on`, marks every outer terminal as clipboard-capable, and turns `mouse on` for fullscreen selection.
+* **Stale SSH variables in tmux.** A pane keeps the environment it was born with. Attach over SSH to a session you started locally (or the reverse) and Claude picks the wrong path. `.tmux.conf` adds `SSH_CLIENT SSH_TTY WAYLAND_DISPLAY` to `update-environment`, and the `claude` function in [`.claude/.bashrc.template`](./dotfiles.templates/.claude/.bashrc.template) pulls the fresh values from tmux right before launching. A Claude that is already running keeps the old values, so restart it after switching machines.
+
+Run `clipcheck` anywhere to see which path applies and to send a test string over OSC 52; paste to confirm.
+
+Outer terminal checklist:
+
+| Terminal | OSC 52 |
+| --- | --- |
+| Ghostty, kitty, WezTerm, Alacritty, Windows Terminal | works (Ghostty template sets `clipboard-write = allow`) |
+| iTerm2 | Settings → General → Selection → *Applications in terminal may access clipboard*, or run `/terminal-setup` once outside tmux |
+| Terminal.app | not supported — over SSH, select with `Fn`+drag instead |
+
+On Windows there is no native tmux: pwsh → `ssh` → tmux goes through Windows Terminal's OSC 52, and WSL uses `Set-Clipboard` when local. For a one-off native selection inside fullscreen Claude, hold `Shift` (iTerm2: `Option`, Terminal.app: `Fn`) while dragging.
+
 # GIT alias
 
 Aliases are defined in [`dotfiles.templates/.gitconfig`](./dotfiles.templates/.gitconfig). Run `onboard` and pick `gitconfig` to apply. Click a section to expand.
