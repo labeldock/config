@@ -2,11 +2,19 @@
 
 [`dotfiles.templates/.tmux.conf`](./dotfiles.templates/.tmux.conf) 의 각 설정이 왜 들어왔고 무엇을 해결하는지 정리한 문서입니다.
 
-`.tmux.conf` 의 주석은 영어 한 줄로 "무엇인지" 만 적고, 끝에 `README-TMUX-CONF#N` 번호를 붙입니다. 자세한 도입 배경과 해결 방식은 이 문서의 같은 번호 항목에 있습니다. 설정을 추가할 때는 다음 번호를 쓰고, 이 문서에 항목을 함께 추가합니다.
+`.tmux.conf` 의 주석은 영어 한 줄로 "무엇인지" 만 적고, 끝에 `README-TMUX-CONF#N` 번호를 붙입니다. 자세한 도입 배경과 해결 방식은 이 문서의 같은 번호 항목에 있습니다.
+
+**번호 규칙: 한 번 붙인 번호는 절대 바꾸지 않습니다.**
+
+- 새 설정은 지금까지 쓴 가장 큰 번호의 다음 번호를 받습니다. 중간 번호를 재사용하지 않습니다.
+- 설정을 지워도 번호를 당기지 않습니다. 이 문서의 항목은 "삭제됨" 으로 표시해 남기고, 왜 넣었고 왜 지웠는지 기록합니다.
+- `.tmux.conf` 안에서 설정 순서를 바꿔도 번호는 따라 바뀌지 않습니다.
+
+번호가 바뀌면 이미 복사해 간 `.tmux.conf`, 커밋 메시지, 대화 기록에 남은 `README-TMUX-CONF#N` 이 엉뚱한 항목을 가리키게 되기 때문입니다.
 
 | # | 설정 | 한 줄 요약 |
 | --- | --- | --- |
-| [`#1`](#1-prefix-c-b) | `prefix C-b`, `send-prefix` | prefix 를 C-b 로 고정하고, C-b 두 번이면 앱에 C-b 를 보낸다 |
+| [`#1`](#1-prefix-c-b-삭제됨) | ~~`prefix C-b`, `send-prefix`~~ | 삭제됨. tmux 기본값과 같아 효과가 없었다. 실제 원인은 `#12` |
 | [`#2`](#2-update-environment-term--term_program) | `update-environment TERM TERM_PROGRAM` | attach 한 바깥 터미널 정보를 세션에 남긴다 |
 | [`#3`](#3-extended-keys) | `extended-keys` | Shift+Enter 처럼 수식키 조합을 앱이 구분하게 한다 |
 | [`#4`](#4-allow-passthrough) | `allow-passthrough on` | 앱의 이스케이프 시퀀스가 바깥 터미널까지 가게 한다 |
@@ -17,22 +25,24 @@
 | [`#9`](#9-update-environment-ssh--display) | `update-environment SSH_CLIENT SSH_TTY WAYLAND_DISPLAY` | 재접속 시 SSH·디스플레이 변수를 새로 받는다 |
 | [`#10`](#10-copy-mode-v--y) | copy-mode-vi `v` / `y` | vim 처럼 v 로 선택, y 로 복사 |
 | [`#11`](#11-jk-pane-이동) | `bind j` / `bind k` | j/k 로 이전·다음 pane 이동 |
+| [`#12`](#12-assume-paste-time) | `assume-paste-time 0` | 빠르게 몰려 들어온 키를 붙여넣기로 오해하지 않게 한다 |
 
 ---
 
-## `#1` prefix C-b
+## `#1` prefix C-b (삭제됨)
 
 ```tmux
+# 삭제된 설정
 set -g prefix C-b
 unbind-key C-b
 bind-key C-b send-prefix
 ```
 
 **도입 배경**
-[`#3`](#3-extended-keys) 의 `extended-keys` 를 `always` 로 바꾼 뒤에 "experimental C-b bug fix" 라는 이름으로 추가되었습니다. 어떤 증상이었는지는 기록에 남아 있지 않습니다. 확장 키 모드에서는 C-b 가 일반 제어 문자가 아닌 확장 시퀀스로 들어올 수 있어, prefix 인식이 흔들렸을 가능성이 있습니다.
+Claude Code 를 tmux 안에서 쓰다 보면 가끔 Ctrl+B 가 먹통이 되어, prefix 로 시작하는 tmux 동작을 하나도 쓸 수 없었습니다. 타이핑 자체는 정상이었습니다. 주 환경은 Windows Terminal 의 pwsh 7 에서 SSH 로 macOS 에 접속해 tmux 를 쓰는 경우였고, 한/영 상태와는 관계가 없었습니다. 이를 고치려고 prefix 를 C-b 로 명시하고 `send-prefix` 를 다시 묶었습니다.
 
-**해결 방법**
-prefix 를 기본값에 맡기지 않고 C-b 로 명시합니다. 기존 바인딩을 지운 뒤 `send-prefix` 로 다시 묶어서, C-b 를 두 번 누르면 tmux 안의 앱에 C-b 가 그대로 전달됩니다. 셸의 한 글자 뒤로 가기나 vim 의 페이지 업을 쓸 때 필요합니다.
+**삭제 이유**
+세 줄 모두 tmux 기본값과 똑같아서 실제로는 아무것도 바꾸지 않았습니다. 빈 설정과 이 세 줄만 넣은 설정에서 `prefix` 값과 `C-b` 바인딩이 같은 것을 확인했습니다. 실제 원인은 tmux 3.6 계열의 붙여넣기 판정 버그로 보이며, 대응은 [`#12`](#12-assume-paste-time) 에 정리했습니다. Claude Code 의 Ctrl+B 백그라운드 단축키는 기본값 그대로 C-b 를 두 번 누르면 앱에 전달됩니다.
 
 ## `#2` update-environment TERM / TERM_PROGRAM
 
@@ -172,3 +182,30 @@ pane 이동 기본 키는 방향키나 `o` 라서 손이 홈 로우를 벗어납
 
 **해결 방법**
 `prefix j` 는 이전 pane, `prefix k` 는 다음 pane 으로 이동합니다. 한때 방향이 반대였는데, 호스트에서 쓰던 방향으로 맞췄습니다.
+
+## `#12` assume-paste-time
+
+```tmux
+set -g assume-paste-time 0
+```
+
+**도입 배경**
+[`#1`](#1-prefix-c-b-삭제됨) 의 Ctrl+B 먹통 증상의 실제 원인으로 보이는 tmux 3.6 계열 버그가 두 가지 있습니다. 둘 다 tmux 가 "지금 붙여넣기 중" 이라고 잘못 판단하면, 그동안 들어오는 키를 단축키로 해석하지 않고 글자로 넘기는 문제입니다. 그래서 타이핑은 되는데 prefix 만 죽은 것처럼 보입니다.
+
+1. **붙여넣기 끝 신호가 나뉘어 도착하는 경우:** 터미널은 붙여넣기 내용 앞뒤에 시작 신호와 끝 신호를 붙입니다. Windows 의 OpenSSH 를 거치면 끝 신호가 여러 조각으로 나뉘어 도착할 수 있고, 3.6 계열은 이를 알아보지 못해 붙여넣기 상태에 갇힙니다. RustDesk 등으로 받은 내용을 Claude 에 붙여넣은 직후에 생기기 쉽습니다. tmux [issue 5089](https://github.com/tmux/tmux/issues/5089), [PR 5088](https://github.com/tmux/tmux/issues/5088).
+2. **키가 몰려 들어오는 경우:** tmux 는 `assume-paste-time` 보다 짧은 간격으로 들어온 키 묶음을 붙여넣기로 추측합니다. 기본값은 1ms 입니다. 지연이 큰 SSH 에서는 키가 뭉쳐서 도착하므로 prefix 가 붙여넣기의 일부로 취급될 수 있습니다. tmux [issue 5031](https://github.com/tmux/tmux/issues/5031).
+
+**해결 방법**
+`assume-paste-time 0` 으로 두 번째 경우의 추측을 끕니다. 터미널이 붙여넣기 시작과 끝 신호를 보내므로 추측 없이도 붙여넣기는 정상으로 처리됩니다. tmux 3.7 부터는 이런 터미널에서 추측을 자동으로 끄기 때문에 이 설정은 3.6 계열을 위한 안전장치입니다.
+
+첫 번째 경우는 설정으로 막을 수 없고, tmux 3.7 이상으로 올려야 고쳐집니다. 3.7 에는 Windows Terminal 의 나뉜 끝 신호 처리와, 붙여넣기가 5초 넘게 끝나지 않으면 강제로 끝내는 수정이 들어 있습니다. 업그레이드 후에는 이미 떠 있는 tmux 서버를 완전히 내렸다 올려야 새 버전이 적용됩니다.
+
+**먹통일 때 복구**
+다른 터미널 탭에서 같은 호스트에 접속해 클라이언트를 분리한 뒤, 원래 탭에서 다시 attach 합니다.
+
+```bash
+tmux detach-client -s <session>
+```
+
+**주의**
+붙여넣기 시작과 끝 신호를 보내지 않는 터미널에서는 붙여넣은 내용 안의 prefix 바이트가 단축키로 해석될 수 있습니다. Windows Terminal, Ghostty, iTerm2 등은 신호를 보내므로 해당하지 않습니다.
