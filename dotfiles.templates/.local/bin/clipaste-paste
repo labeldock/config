@@ -1,0 +1,28 @@
+#!/bin/bash
+# clipaste-paste — fetch the current clipboard image from your LOCAL machine
+# (through the clipaste SSH tunnel / WSL bridge) into a real file on THIS host,
+# then print the path. Use it when your tool can't read the clipboard directly:
+#   - Codex CLI (reads clipboard in-process, bypasses the xclip shim)
+#   - any macOS remote (xclip/wl-paste don't apply there)
+#
+# Usage: run `clipaste-paste`, then hand the printed path to your tool.
+# Installed by: clipaste ssh-setup / clipaste wsl-setup
+
+CLIPASTE_URL="http://127.0.0.1:18340"
+
+if ! curl -sf "${CLIPASTE_URL}/clipboard/type" 2>/dev/null | grep -q '"image"'; then
+    echo "clipaste-paste: no image on clipboard — take a screenshot (or copy an image file) on your local machine first" >&2
+    exit 1
+fi
+
+out="${TMPDIR:-/tmp}"
+out="${out%/}/clipaste-$(date +%s)-$$.png"
+if curl -sf -o "$out" "${CLIPASTE_URL}/clipboard/image" 2>/dev/null && [ -s "$out" ]; then
+    echo "$out"
+    exit 0
+fi
+
+rm -f "$out"
+echo "clipaste-paste: failed to fetch image from ${CLIPASTE_URL} (is the clipaste daemon running locally and the tunnel up?)" >&2
+exit 1
+

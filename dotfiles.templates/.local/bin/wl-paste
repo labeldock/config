@@ -1,0 +1,35 @@
+#!/bin/bash
+# clipaste wl-paste shim — for Wayland environments
+# Installed by: clipaste wsl-setup
+
+CLIPASTE_URL="http://127.0.0.1:18340"
+REAL_WL_PASTE="$(PATH=$(echo "$PATH" | sed "s|$HOME/.local/bin:||g") command -v wl-paste 2>/dev/null)"
+
+case "$*" in
+    *"--list-types"*)
+        if curl -sf "${CLIPASTE_URL}/clipboard/type" 2>/dev/null | grep -q '"image"'; then
+            echo "image/png"
+            echo "text/plain"
+            exit 0
+        fi
+        ;;
+    *"--type image/"*|*"-t image/"*)
+        tmpfile=$(mktemp /tmp/clipaste-remote-XXXXXX.png)
+        if curl -sf -o "$tmpfile" "${CLIPASTE_URL}/clipboard/image" 2>/dev/null; then
+            if [ -s "$tmpfile" ]; then
+                cat "$tmpfile"
+                rm -f "$tmpfile"
+                exit 0
+            fi
+        fi
+        rm -f "$tmpfile"
+        ;;
+esac
+
+if [ -n "$REAL_WL_PASTE" ] && [ -x "$REAL_WL_PASTE" ]; then
+    exec "$REAL_WL_PASTE" "$@"
+else
+    echo "wl-paste not found" >&2
+    exit 1
+fi
+

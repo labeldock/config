@@ -1,0 +1,35 @@
+#!/bin/bash
+# clipaste xclip shim — intercepts xclip calls and fetches images from clipaste
+# Installed by: clipaste wsl-setup
+
+CLIPASTE_URL="http://127.0.0.1:18340"
+REAL_XCLIP="$(PATH=$(echo "$PATH" | sed "s|$HOME/.local/bin:||g") command -v xclip 2>/dev/null)"
+
+case "$*" in
+    *"-selection clipboard"*"-t TARGETS"*"-o"*|*"-sel clip"*"-t TARGETS"*"-o"*)
+        if curl -sf "${CLIPASTE_URL}/clipboard/type" 2>/dev/null | grep -q '"image"'; then
+            echo "TARGETS"
+            echo "image/png"
+            exit 0
+        fi
+        ;;
+    *"-selection clipboard"*"-t image/png"*"-o"*|*"-sel clip"*"-t image/png"*"-o"*)
+        tmpfile=$(mktemp /tmp/clipaste-remote-XXXXXX.png)
+        if curl -sf -o "$tmpfile" "${CLIPASTE_URL}/clipboard/image" 2>/dev/null; then
+            if [ -s "$tmpfile" ]; then
+                cat "$tmpfile"
+                rm -f "$tmpfile"
+                exit 0
+            fi
+        fi
+        rm -f "$tmpfile"
+        ;;
+esac
+
+if [ -n "$REAL_XCLIP" ] && [ -x "$REAL_XCLIP" ]; then
+    exec "$REAL_XCLIP" "$@"
+else
+    echo "xclip not found" >&2
+    exit 1
+fi
+

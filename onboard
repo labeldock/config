@@ -244,6 +244,73 @@ do_mise() {
   pick_mise_tools
 }
 
+# clipaste client: helpers on the machine where Claude Code runs.
+do_clipaste_client() {
+  printf '\n%s== clipaste client ==%s\n' "$UI_BOLD" "$UI_RESET"
+  local role f
+  role=$(ob_clipaste_role)
+  printf 'role: %s%s%s\n\n' "$UI_BOLD" "$role" "$UI_RESET"
+  case "$role" in
+    wsl)
+      ob__ensure_packages curl:curl || return 1
+      ob__clipaste_install_linux_binary || return 1
+      printf '\n%s→%s clipaste wsl-setup (clipaste.exe must be running on Windows)\n' "$UI_CYAN" "$UI_RESET"
+      "$(ob_clipaste_bin)" wsl-setup
+      return
+      ;;
+    macos)
+      apply_copy "$DOTFILES_DIR/.local/bin/clipaste-paste" "$HOME/.local/bin/clipaste-paste"
+      ;;
+    linux-*)
+      for f in clipaste-paste xclip wl-paste; do
+        apply_copy "$DOTFILES_DIR/.local/bin/$f" "$HOME/.local/bin/$f"
+      done
+      ;;
+    *)
+      printf '%s✗%s unsupported OS: %s\n' "$UI_YELLOW" "$UI_RESET" "$(uname -s)" >&2
+      return 1
+      ;;
+  esac
+  for f in clipaste-paste xclip wl-paste; do
+    [ -f "$HOME/.local/bin/$f" ] && chmod +x "$HOME/.local/bin/$f"
+  done
+  ob__ensure_packages curl:curl || true
+  ob_clipaste_ensure_path
+  echo
+  ob_clipaste_client_status
+  echo
+  if [ "$role" = macos ]; then
+    printf 'Paste: run clipaste-paste, then paste the printed path into Claude Code.\n'
+  else
+    printf 'Paste: press Ctrl+V in Claude Code. Other tools: run clipaste-paste and paste the path.\n'
+  fi
+}
+
+# clipaste paste server: daemon on the machine you take screenshots on.
+do_clipaste_server() {
+  printf '\n%s== clipaste paste server ==%s\n' "$UI_BOLD" "$UI_RESET"
+  ob_install_clipaste_server
+}
+
+# status_clipaste_client → missing | same | diff
+status_clipaste_client() {
+  case "$(ob_clipaste_role)" in
+    wsl)   [ -x "$HOME/.local/bin/clipaste-paste" ] && echo same || echo missing ;;
+    macos) status_copy "$DOTFILES_DIR/.local/bin/clipaste-paste" "$HOME/.local/bin/clipaste-paste" ;;
+    *)
+      local f st result=same
+      for f in clipaste-paste xclip wl-paste; do
+        st=$(status_copy "$DOTFILES_DIR/.local/bin/$f" "$HOME/.local/bin/$f")
+        case "$st" in
+          missing) result=missing; break ;;
+          diff)    result=diff ;;
+        esac
+      done
+      echo "$result"
+      ;;
+  esac
+}
+
 # ---- config actions ----
 
 do_gitconfig() {
@@ -306,19 +373,25 @@ submenu_install() {
   local -a labels actions
   while true; do
     printf '\033[H\033[2J'
-    local brew_tag="" mise_tag=""
+    local brew_tag="" mise_tag="" server_tag="" client_badge
     ob_has brew && brew_tag=" ${UI_GREEN}(installed)${UI_RESET}"
     ob_has mise && mise_tag=" ${UI_GREEN}(installed)${UI_RESET}"
+    [ -n "$(ob_clipaste_bin)" ] && server_tag=" ${UI_GREEN}(installed $(ob_clipaste_version))${UI_RESET}"
+    client_badge=$(fmt_badge "$(status_clipaste_client)")
     labels=(
       "Recommend — brew + mise + global tools"
       "Brew 설치${brew_tag}"
       "Mise 설치${mise_tag}"
+      "clipaste client — Claude Code 쪽 붙여넣기  ${client_badge}"
+      "clipaste server — 스크린샷 찍는 쪽${server_tag}"
       "← back"
     )
     actions=(
       do_recommend
       do_brew
       do_mise
+      do_clipaste_client
+      do_clipaste_server
       __back
     )
     ui_menu "install" labels

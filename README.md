@@ -33,6 +33,8 @@ We reach for [Homebrew](https://brew.sh) as the system package manager and [mise
 
 `Recommend` installs the lot in one go. Anything already on `$PATH` is shown as `(installed)` and skipped.
 
+The same submenu also installs the two halves of [clipaste](#clipboard-image-paste) for pasting screenshots into Claude Code: the client where Claude runs, and the paste server where you take screenshots.
+
 ## Configs we use
 
 Templates live in two directories, each mapping to a destination:
@@ -57,7 +59,7 @@ The merge logic lives in [`lib/gitconfig_merge.py`](./lib/gitconfig_merge.py) an
 
 | Submenu | Items |
 | --- | --- |
-| `install` | `Recommend`, `Brew`, `Mise` |
+| `install` | `Recommend`, `Brew`, `Mise`, `clipaste client`, `clipaste server` |
 | `config` | `gitconfig`, `nanorc`, `tmux`, `ghostty`, `tm_properties`, `yazi`, `completion` |
 | `ai-config` | `opencode`, `claude` |
 
@@ -110,32 +112,35 @@ Two traps if you do write it: `[1m]` is a glob pattern in zsh, so the model argu
 
 Porting to PowerShell: drop the `--teammate-mode` line — tmux is not available on Windows.
 
-## Clipboard
+## Clipboard image paste
 
-Copying from Claude Code takes one of three paths, and "sometimes works, sometimes doesn't" almost always means the wrong one was picked or one hop dropped it:
+A screenshot on your desktop never reaches a remote Claude Code by itself: the terminal paste channel carries text only, and Claude's Ctrl+V reads the clipboard of the machine Claude runs on. We use [clipaste](https://github.com/hqhq1025/clipaste) to bridge that. It has two parts, installed separately on different machines:
 
-| Where Claude runs | Path | What must be true |
+| Part | Runs on | Does |
 | --- | --- | --- |
-| local macOS / Linux / Windows | `pbcopy` / `wl-copy`·`xclip`·`xsel` / `Set-Clipboard` | the tool is installed (`xclip` or `wl-clipboard` on Linux) |
-| over SSH | OSC 52 escape sequence | the outer terminal accepts OSC 52 |
-| inside tmux | also the tmux buffer, OSC 52 forwarded by tmux | `set-clipboard on` — tmux's default `external` silently drops OSC 52 sent by apps |
+| **paste server** | the machine you take screenshots on | serves the clipboard image on `127.0.0.1:18340` |
+| **client** | the machine Claude Code runs on | fetches that image when you paste |
 
-The `tmux` and `claude` items fix the two causes we hit:
+Over SSH the two meet through one line in the server side's `~/.ssh/config`, in the `Host` block of the remote:
 
-* **tmux drops OSC 52.** [`.tmux.conf`](./dotfiles.templates/.tmux.conf) ([#7](./README-TMUX-CONF.md#7-clipboard-osc-52), [#8](./README-TMUX-CONF.md#8-mouse)) sets `set-clipboard on`, marks every outer terminal as clipboard-capable, and turns `mouse on` for fullscreen selection.
-* **Stale SSH variables in tmux.** A pane keeps the environment it was born with. Attach over SSH to a session you started locally (or the reverse) and Claude picks the wrong path. `.tmux.conf` adds `SSH_CLIENT SSH_TTY WAYLAND_DISPLAY` to `update-environment` ([#9](./README-TMUX-CONF.md#9-update-environment-ssh--display)), so panes opened after the attach get fresh values. After switching machines, start Claude in a new pane.
+```sshconfig
+RemoteForward 18340 127.0.0.1:18340
+```
 
-Run `clipcheck` anywhere to see which path applies, whether the current pane's SSH variables are stale, and to send a test string over OSC 52; paste to confirm.
+| Claude Code runs on | Paste with | Client |
+| --- | --- | --- |
+| the paste server machine itself | Ctrl+V (Windows also Alt+V) | none needed |
+| a Linux server over SSH | Ctrl+V | `xclip` / `wl-paste` helpers + `clipaste-paste` |
+| a Mac over SSH | run `clipaste-paste`, paste the printed path | `clipaste-paste` |
+| WSL2 | Ctrl+V | `clipaste wsl-setup` |
 
-Outer terminal checklist:
+Install them with:
 
-| Terminal | OSC 52 |
-| --- | --- |
-| Ghostty, kitty, WezTerm, Alacritty, Windows Terminal | works (Ghostty template sets `clipboard-write = allow`) |
-| iTerm2 | Settings → General → Selection → *Applications in terminal may access clipboard*, or run `/terminal-setup` once outside tmux |
-| Terminal.app | not supported — over SSH, select with `Fn`+drag instead |
+* **Paste server on Windows:** run [`windows/clipaste.cmd`](./windows/clipaste.cmd). It shows install status, runs the official installer, toggles server-only mode, and connects remotes either with `ssh-setup` (adds the forward and installs the client there) or by adding only the forward line. Server-only keeps the screenshot bitmap on the Windows clipboard, so other apps and RustDesk clipboard sharing still receive the image instead of a file path. The cost is that a local Windows terminal no longer gets the path to paste as text.
+* **Paste server on macOS / a Linux desktop:** `onboard` → `install` → `clipaste server`. brew + `brew services` on macOS; a checksum-verified release binary plus optional desktop autostart on Linux.
+* **Client on macOS / Linux:** `onboard` → `install` → `clipaste client`. It copies the helpers from [`dotfiles.templates/.local/bin`](./dotfiles.templates/.local/bin) into `~/.local/bin`, makes sure that directory comes first on `PATH`, and reports whether the paste server is reachable. The helpers are byte-identical to what `clipaste ssh-setup` writes, so either install path shows `in sync`. In WSL2 it installs the binary and runs `wsl-setup`.
 
-On Windows there is no native tmux: pwsh → `ssh` → tmux goes through Windows Terminal's OSC 52, and WSL uses `Set-Clipboard` when local. For a one-off native selection inside fullscreen Claude, hold `Shift` (iTerm2: `Option`, Terminal.app: `Fn`) while dragging.
+No tmux setting is needed. The forwarded port lives on the remote's loopback, so every tmux pane reaches it while any SSH session with the forward is open.
 
 # GIT alias
 
@@ -279,11 +284,11 @@ Your job is to perform the same work `onboard` would, without requiring the user
 3. **Apply.** Perform the action directly — you do not need to invoke `~/config/onboard`. Use the strategy tables above as your spec:
    - `copy`: create the destination directory if needed, then write the template content. If the destination exists and differs, only overwrite after the user approves the diff.
    - `source`: append `[ -f "<template-path>" ] && . "<template-path>" #~/config:<tag>:source` to both `~/.bashrc` and `~/.zshrc`. The trailing `#~/config:<tag>:source` marker makes this idempotent — skip files that already contain the marker.
-   - Combined items: `tmux` is copy (`.tmux.conf`) plus source (`tmux.bashrc.template`, tag `tmux`). `opencode` is copy (`opencode-*.json`) plus source (`.bashrc.template`, tag `opencode`).
+   - Combined items: `tmux` is copy (`.tmux.conf`) plus source (`tmux.bashrc.template`, tag `tmux`). `opencode` is copy (`opencode-*.json`) plus source (`.bashrc.template`, tag `opencode`). `clipaste client` is copy (`.local/bin/clipaste-paste`, `xclip`, `wl-paste` on Linux; `clipaste-paste` only on macOS; `chmod +x`) plus a `# clipaste PATH` line that puts `~/.local/bin` first in `~/.bashrc` / `~/.zshrc`; in WSL2 run `clipaste wsl-setup` instead.
    - `gitconfig-merge`: for `.gitconfig`, shell out to `python3 lib/gitconfig_merge.py merge <template> <target>`. Template keys upsert into the target at key granularity; target-only keys and target-only sections (including `[user]`, `[credential "..."]`, `[core]`, `[delta]`, `[merge]`) are preserved verbatim. There is no per-key diff prompt — a single unified diff is shown over the whole file and the user confirms once.
    - `toml-merge`: for `yazi/keymap.toml`, either shell out to `python3 lib/toml_merge.py merge <template> <target>` or reproduce its logic (match `[[mgr.prepend_keymap]]` blocks by their `on =` line, replace matches, append the rest, leave everything else untouched).
 
-4. **Install items** (`Recommend` / `Brew` / `Mise`) still require running the respective installers — drive them from the shell as the scripts in [`lib/onboard.sh`](./lib/onboard.sh) do. You may reuse that file directly.
+4. **Install items** (`Recommend` / `Brew` / `Mise` / `clipaste server`) still require running the respective installers — drive them from the shell as the scripts in [`lib/onboard.sh`](./lib/onboard.sh) do. You may reuse that file directly.
 
 5. **Be conservative.** Templates in this repo are the single source of truth, but the *user's* customizations take precedence when they conflict. Favour merge over overwrite when both sides are meaningful (the yazi case), and always ask before replacing a `diff` target.
 
