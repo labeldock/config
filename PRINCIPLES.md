@@ -76,3 +76,4 @@ Git Bash는 best-effort 수준으로만 지원합니다. 특수 파일/설정이
 | Git 워크플로 | `lazygit`, `delta` |
 | 파일 탐색 | `yazi` |
 | 셸 생산성 | `fzf`, `zoxide` |
+| 터미널 멀티플렉서 | `herdr` |

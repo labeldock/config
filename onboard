@@ -22,6 +22,7 @@ MISE_TOOLS=(
   yazi
   fzf
   zoxide
+  herdr
 )
 
 ob__extend_path

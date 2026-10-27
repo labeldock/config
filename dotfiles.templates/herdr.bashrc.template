@@ -4,8 +4,8 @@
 # bash / zsh 모두에서 동작한다.
 #
 # herdr 는 pane 프로세스에 HERDR_ENV=1 을 넣는다. hz* 는 tmux 안($TMUX)에서
-# herdr 를 띄우지 않도록 막고, `--force` 를 붙이면 허용한다. herdr / tmux 를
-# 직접 실행하는 것에는 관여하지 않는다.
+# herdr 를 띄우지 않도록 막고, `--force` 를 붙이면 허용한다. 세션을 만들지 않고
+# 목록만 보는 hzl 은 막지 않으며, herdr / tmux 를 직접 실행하는 것에도 관여하지 않는다.
 
 # hz* 가 herdr 를 띄워도 되는지 확인한다. usage: _herdr_start_check CMD FORCE
 _herdr_start_check() {
@@ -109,6 +109,7 @@ EOF
 )
 
 # herdr: list sessions (extra args such as --json are passed through)
+# 목록만 보고 세션을 만들지 않으므로 tmux 안에서도 경고 없이 동작한다.
 hzl() {
   herdr session list "$@"
 }

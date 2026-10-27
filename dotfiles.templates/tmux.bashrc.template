@@ -4,7 +4,8 @@
 # bash / zsh 모두에서 동작한다.
 #
 # tzn / tzt / tza 는 herdr 안(HERDR_ENV=1)에서 tmux 를 띄우지 않도록 막고,
-# `--force` 를 붙이면 허용한다. tmux / herdr 를 직접 실행하는 것에는 관여하지 않는다.
+# `--force` 를 붙이면 허용한다. 세션을 만들지 않고 목록만 보는 tzl 은 막지 않으며,
+# tmux / herdr 를 직접 실행하는 것에도 관여하지 않는다.
 
 # herdr pane 안이면 경고하고 막는다. usage: _tmux_herdr_check CMD FORCE
 _tmux_herdr_check() {
@@ -143,6 +144,7 @@ tzt() (
 )
 
 # tmux: list sessions
+# 목록만 보고 세션을 만들지 않으므로 herdr 안에서도 경고 없이 동작한다.
 tzl() {
   tmux list-sessions "$@" 2>/dev/null || printf 'No tmux sessions.\n'
 }

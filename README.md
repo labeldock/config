@@ -30,6 +30,7 @@ We reach for [Homebrew](https://brew.sh) as the system package manager and [mise
 | Git workflow | `lazygit`, `delta` |
 | File browsing | `yazi` |
 | Shell productivity | `fzf`, `zoxide` |
+| Terminal multiplexer | `herdr` |
 
 `Recommend` installs the lot in one go. Anything already on `$PATH` is shown as `(installed)` and skipped.
 
@@ -72,18 +73,18 @@ Helpers are defined in [`dotfiles.templates/tmux.bashrc.template`](./dotfiles.te
 * `tzt [session]` : attach and pick a window within one session (defaults to current)
 * `tzl` : list sessions
 
-`tzn` / `tza` / `tzt` refuse to start tmux inside herdr (`HERDR_ENV=1`) to avoid nesting; add `--force` (e.g. `tzn --force`) to start it anyway. Running `tmux` directly is not affected.
+`tzn` / `tza` / `tzt` refuse to start tmux inside herdr (`HERDR_ENV=1`) to avoid nesting; add `--force` (e.g. `tzn --force`) to start it anyway. `tzl` only lists sessions, so it runs anywhere without a warning; running `tmux` directly is not affected either.
 
 # HERDR helpers
 
-Helpers for [herdr](https://herdr.dev) are defined in [`dotfiles.templates/herdr.bashrc.template`](./dotfiles.templates/herdr.bashrc.template). Run `onboard` and pick `herdr` to source them into `~/.bashrc` / `~/.zshrc`.
+Helpers for [herdr](https://herdr.dev) are defined in [`dotfiles.templates/herdr.bashrc.template`](./dotfiles.templates/herdr.bashrc.template). Install herdr from `onboard` → `install` → `Recommend` (or `mise use -g herdr`), then pick `config` → `herdr` to source the helpers into `~/.bashrc` / `~/.zshrc`.
 
 * `hzn` : create or attach a session named `parent-current` dir (same naming as `tzn`)
 * `hzt` : launch or attach the default session
 * `hza` : pick a session from the list and attach — arrow keys when `fzf` is installed, otherwise type its number
 * `hzl` : list sessions (`herdr session list`; extra args such as `--json` pass through)
 
-`hzn` / `hzt` / `hza` refuse to start herdr inside tmux (`$TMUX`) to avoid nesting; add `--force` (e.g. `hzn --force`) to start it anyway. Running `herdr` directly is not affected.
+`hzn` / `hzt` / `hza` refuse to start herdr inside tmux (`$TMUX`) to avoid nesting; add `--force` (e.g. `hzn --force`) to start it anyway. `hzl` only lists sessions, so it runs anywhere without a warning; running `herdr` directly is not affected either.
 
 # CLAUDE alias
 
