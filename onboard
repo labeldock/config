@@ -263,6 +263,11 @@ do_tmux() {
   apply_rc_source "$DOTFILES_DIR/tmux.bashrc.template" "tmux"
 }
 
+do_herdr() {
+  printf '\n%s== herdr ==%s\n' "$UI_BOLD" "$UI_RESET"
+  apply_rc_source "$DOTFILES_DIR/herdr.bashrc.template" "herdr"
+}
+
 do_completion() {
   printf '\n%s== completion ==%s\n' "$UI_BOLD" "$UI_RESET"
   apply_rc_source "$DOTFILES_DIR/completion.bashrc.template" "completion"
@@ -334,11 +339,12 @@ submenu_config() {
   local -a labels actions
   while true; do
     printf '\033[H\033[2J'
-    local st_git st_nano st_tmux st_tmux_rc st_ghostty st_tm st_yazi st_completion
+    local st_git st_nano st_tmux st_tmux_rc st_herdr st_ghostty st_tm st_yazi st_completion
     st_git=$(status_gitconfig_merge "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig")
     st_nano=$(status_copy      "$DOTFILES_DIR/.nanorc"        "$HOME/.nanorc")
     st_tmux=$(status_copy      "$DOTFILES_DIR/.tmux.conf"     "$HOME/.tmux.conf")
     st_tmux_rc=$(status_source "tmux")
+    st_herdr=$(status_source   "herdr")
     st_ghostty=$(status_copy   "$XDG_DIR/ghostty/config"      "$HOME/.config/ghostty/config")
     st_tm=$(status_copy        "$DOTFILES_DIR/.tm_properties" "$HOME/.tm_properties")
     st_yazi=$(status_toml_merge "$XDG_DIR/yazi/keymap.toml"   "$HOME/.config/yazi/keymap.toml")
@@ -347,6 +353,7 @@ submenu_config() {
       "gitconfig      $(fmt_badge "$st_git")"
       "nanorc         $(fmt_badge "$st_nano")"
       "tmux           $(fmt_badge "$st_tmux") $(fmt_badge "$st_tmux_rc")"
+      "herdr          $(fmt_badge "$st_herdr")"
       "ghostty        $(fmt_badge "$st_ghostty")"
       "tm_properties  $(fmt_badge "$st_tm")"
       "yazi           $(fmt_badge "$st_yazi")"
@@ -357,6 +364,7 @@ submenu_config() {
       do_gitconfig
       do_nanorc
       do_tmux
+      do_herdr
       do_ghostty
       do_tm_properties
       do_yazi

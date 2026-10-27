@@ -39,7 +39,7 @@ Templates live in two directories, each mapping to a destination:
 
 | Source directory | Destination | Examples |
 | --- | --- | --- |
-| [`dotfiles.templates/`](./dotfiles.templates) | `$HOME/...` | `.gitconfig`, `.tmux.conf`, `.nanorc`, `.tm_properties`, `tmux.bashrc.template` |
+| [`dotfiles.templates/`](./dotfiles.templates) | `$HOME/...` | `.gitconfig`, `.tmux.conf`, `.nanorc`, `.tm_properties`, `tmux.bashrc.template`, `herdr.bashrc.template` |
 | [`xdg_config.templates/`](./xdg_config.templates) | `$HOME/.config/...` | `ghostty/config`, `opencode/*.json`, `yazi/keymap.toml` |
 
 When you pick a menu item, one of these strategies applies:
@@ -47,7 +47,7 @@ When you pick a menu item, one of these strategies applies:
 | Strategy | When used | Behaviour |
 | --- | --- | --- |
 | **copy** | plain config files (nanorc, tmux.conf, ghostty/config, tm_properties, opencode JSON) | missing → copy; differs → show unified diff and ask before overwriting; identical → no-op |
-| **source** | shell rc snippets (`completion.bashrc.template`, `tmux.bashrc.template`, `claude/.bashrc.template`, `opencode/.bashrc.template`) | appends a single `[ -f <template> ] && . <template>` line to `~/.bashrc` / `~/.zshrc`, tagged with a marker comment so it runs exactly once |
+| **source** | shell rc snippets (`completion.bashrc.template`, `tmux.bashrc.template`, `herdr.bashrc.template`, `claude/.bashrc.template`, `opencode/.bashrc.template`) | appends a single `[ -f <template> ] && . <template>` line to `~/.bashrc` / `~/.zshrc`, tagged with a marker comment so it runs exactly once |
 | **gitconfig-merge** | `.gitconfig` | per-key upsert: template keys overwrite matching keys in the target, keys that exist only in the target are preserved, and sections that exist only in the target (e.g. `[user]`, `[credential "..."]`, `[core]`, `[delta]`) are left untouched |
 | **toml-merge** | `yazi/keymap.toml` | parses `[[mgr.prepend_keymap]]` blocks, replaces matching blocks by their `on =` key, appends new ones; user-added keys and non-block comments are preserved |
 
@@ -58,7 +58,7 @@ The merge logic lives in [`lib/gitconfig_merge.py`](./lib/gitconfig_merge.py) an
 | Submenu | Items |
 | --- | --- |
 | `install` | `Recommend`, `Brew`, `Mise` |
-| `config` | `gitconfig`, `nanorc`, `tmux`, `ghostty`, `tm_properties`, `yazi`, `completion` |
+| `config` | `gitconfig`, `nanorc`, `tmux`, `herdr`, `ghostty`, `tm_properties`, `yazi`, `completion` |
 | `ai-config` | `opencode`, `claude` |
 
 Each item shows a status badge so you can see where you stand before touching anything: `+ missing`, `= in sync`, `~ diff`, `~ partial`, `= sourced`, `+ not sourced`.
@@ -67,8 +67,23 @@ Each item shows a status badge so you can see where you stand before touching an
 
 Helpers are defined in [`dotfiles.templates/tmux.bashrc.template`](./dotfiles.templates/tmux.bashrc.template). Run `onboard` and pick `tmux` to apply — that copies `.tmux.conf` and sources the helpers into `~/.bashrc` / `~/.zshrc`.
 
+* `tzn` : create or attach a session named `parent-current` dir
 * `tza` : attach and pick from the full session/window tree
 * `tzt [session]` : attach and pick a window within one session (defaults to current)
+* `tzl` : list sessions
+
+`tzn` / `tza` / `tzt` refuse to start tmux inside herdr (`HERDR_ENV=1`) to avoid nesting; add `--force` (e.g. `tzn --force`) to start it anyway. Running `tmux` directly is not affected.
+
+# HERDR helpers
+
+Helpers for [herdr](https://herdr.dev) are defined in [`dotfiles.templates/herdr.bashrc.template`](./dotfiles.templates/herdr.bashrc.template). Run `onboard` and pick `herdr` to source them into `~/.bashrc` / `~/.zshrc`.
+
+* `hzn` : create or attach a session named `parent-current` dir (same naming as `tzn`)
+* `hzt` : launch or attach the default session
+* `hza` : pick a session from the list and attach — arrow keys when `fzf` is installed, otherwise type its number
+* `hzl` : list sessions (`herdr session list`; extra args such as `--json` pass through)
+
+`hzn` / `hzt` / `hza` refuse to start herdr inside tmux (`$TMUX`) to avoid nesting; add `--force` (e.g. `hzn --force`) to start it anyway. Running `herdr` directly is not affected.
 
 # CLAUDE alias
 
@@ -250,7 +265,7 @@ Your job is to perform the same work `onboard` would, without requiring the user
 3. **Apply.** Perform the action directly — you do not need to invoke `~/config/onboard`. Use the strategy tables above as your spec:
    - `copy`: create the destination directory if needed, then write the template content. If the destination exists and differs, only overwrite after the user approves the diff.
    - `source`: append `[ -f "<template-path>" ] && . "<template-path>" #~/config:<tag>:source` to both `~/.bashrc` and `~/.zshrc`. The trailing `#~/config:<tag>:source` marker makes this idempotent — skip files that already contain the marker.
-   - Combined items: `tmux` is copy (`.tmux.conf`) plus source (`tmux.bashrc.template`, tag `tmux`). `opencode` is copy (`opencode-*.json`) plus source (`.bashrc.template`, tag `opencode`).
+   - Combined items: `tmux` is copy (`.tmux.conf`) plus source (`tmux.bashrc.template`, tag `tmux`). `herdr` is source only (`herdr.bashrc.template`, tag `herdr`). `opencode` is copy (`opencode-*.json`) plus source (`.bashrc.template`, tag `opencode`).
    - `gitconfig-merge`: for `.gitconfig`, shell out to `python3 lib/gitconfig_merge.py merge <template> <target>`. Template keys upsert into the target at key granularity; target-only keys and target-only sections (including `[user]`, `[credential "..."]`, `[core]`, `[delta]`, `[merge]`) are preserved verbatim. There is no per-key diff prompt — a single unified diff is shown over the whole file and the user confirms once.
    - `toml-merge`: for `yazi/keymap.toml`, either shell out to `python3 lib/toml_merge.py merge <template> <target>` or reproduce its logic (match `[[mgr.prepend_keymap]]` blocks by their `on =` line, replace matches, append the rest, leave everything else untouched).
 

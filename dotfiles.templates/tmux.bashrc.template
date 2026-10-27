@@ -2,6 +2,18 @@
 #
 # onboard 의 source 방식은 이 파일을 ~/.bashrc 와 ~/.zshrc 양쪽에서 source 한다.
 # bash / zsh 모두에서 동작한다.
+#
+# tzn / tzt / tza 는 herdr 안(HERDR_ENV=1)에서 tmux 를 띄우지 않도록 막고,
+# `--force` 를 붙이면 허용한다. tmux / herdr 를 직접 실행하는 것에는 관여하지 않는다.
+
+# herdr pane 안이면 경고하고 막는다. usage: _tmux_herdr_check CMD FORCE
+_tmux_herdr_check() {
+  if [ "${HERDR_ENV:-}" = 1 ] && [ "$2" != 1 ]; then
+    printf '%s: inside herdr — starting tmux here is blocked on purpose.\n' "$1" >&2
+    printf 'Run `%s --force` to start it anyway.\n' "$1" >&2
+    return 1
+  fi
+}
 
 _tmux_tree_attach() (
   local scope=$1 session=$2 picker view watcher action filter
@@ -59,12 +71,17 @@ _tmux_tree_attach() (
 
 # tmux: create or attach a session named parent-current dir
 tzn() (
-  local cwd current parent name
+  local force=0 arg cwd current parent name
+
+  for arg in "$@"; do
+    [ "$arg" = --force ] && force=1
+  done
 
   if [ -n "$TMUX" ]; then
     printf 'Already in tmux. Use Ctrl-b s to choose a session.\n'
     return
   fi
+  _tmux_herdr_check tzn "$force" || return
 
   cwd=${PWD%/}
   current=${cwd##*/}
@@ -85,23 +102,38 @@ tzn() (
 
 # tmux: pick from the full session/window tree and attach independently
 tza() (
+  local force=0 arg
+
+  for arg in "$@"; do
+    [ "$arg" = --force ] && force=1
+  done
+
   if [ -n "$TMUX" ]; then
     printf 'Already in tmux. Use Ctrl-b s for sessions or Ctrl-b w for windows.\n'
     return
   fi
+  _tmux_herdr_check tza "$force" || return
   _tmux_tree_attach all
 )
 
 # tmux: pick a window within one session and attach independently
 tzt() (
-  local session
+  local force=0 arg session
+
+  for arg in "$@"; do
+    case $arg in
+      --force) force=1 ;;
+      *) session=$arg ;;
+    esac
+  done
 
   if [ -n "$TMUX" ]; then
     printf 'Already in tmux. Use Ctrl-b w to choose a window.\n'
     return
   fi
+  _tmux_herdr_check tzt "$force" || return
 
-  session=${1:-$(tmux display-message -p '#S' 2>/dev/null)}
+  session=${session:-$(tmux display-message -p '#S' 2>/dev/null)}
   if [ -z "$session" ] || ! tmux has-session -t "=$session" 2>/dev/null; then
     printf 'tmux session not found: %s\n' "${session:-<none>}" >&2
     return 1
@@ -109,3 +141,8 @@ tzt() (
 
   _tmux_tree_attach session "$session"
 )
+
+# tmux: list sessions
+tzl() {
+  tmux list-sessions "$@" 2>/dev/null || printf 'No tmux sessions.\n'
+}
