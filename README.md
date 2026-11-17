@@ -15,6 +15,14 @@ cd ~ && git clone https://github.com/labeldock/config.git
 
 `onboard` opens an arrow-key / Space / Enter / Esc menu. Picking `install → Recommend` installs brew + mise + a global CLI toolset in one go; the `config` and `ai-config` submenus apply dotfile / XDG templates with a status badge and a diff-prompt flow so existing settings aren't silently overwritten.
 
+`doctor` scans `~/.bashrc`, `~/.zshrc`, `~/.bash_profile`, `~/.zprofile` and `~/.profile` for broken settings and fixes the ones you pick: hardcoded `mise` paths that no longer exist, duplicate onboard lines, `#~/config:<tag>:source` lines pointing at a moved repo, `eval "$(<path> ...)"` / `source <path>` lines whose target is gone, a second `mise activate`, and a missing `brew shellenv` on macOS. The original file is backed up as `<rc>.onboard-backup-<timestamp>`, and broken lines are commented out rather than deleted. It also runs without the menu:
+
+```bash
+~/config/onboard doctor           # pick what to fix
+~/config/onboard doctor --yes     # fix everything found
+~/config/onboard doctor --check   # report only; exit 1 if anything is wrong
+```
+
 # What we prefer here
 
 This is a personal taste. If any of it looks useful, feel free to borrow.

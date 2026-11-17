@@ -6,6 +6,7 @@ set -u
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 . "$SCRIPT_DIR/lib/ui.sh"
 . "$SCRIPT_DIR/lib/onboard.sh"
+. "$SCRIPT_DIR/lib/doctor.sh"
 
 DOTFILES_DIR="$SCRIPT_DIR/dotfiles.templates"
 XDG_DIR="$SCRIPT_DIR/xdg_config.templates"
@@ -306,6 +307,42 @@ do_claude() {
   apply_rc_source "$DOTFILES_DIR/.claude/.bashrc.template" "claude"
 }
 
+# ---- doctor ----
+
+# do_doctor [--yes] — 잘못된 rc 설정을 찾아 보여주고, 고를 항목을 고친다.
+#   --yes : 메뉴 없이 발견된 항목을 전부 고친다.
+do_doctor() {
+  printf '\n%s== doctor ==%s\n' "$UI_BOLD" "$UI_RESET"
+  dr_scan
+  if [ "$DR_COUNT" -eq 0 ]; then
+    printf '%s✓%s 잘못된 설정이 없습니다.\n' "$UI_GREEN" "$UI_RESET"
+    return 0
+  fi
+  printf '%s!%s %d건 발견\n\n' "$UI_YELLOW" "$UI_RESET" "$DR_COUNT"
+  dr_report
+  echo
+
+  local i all="" choices
+  for ((i=0; i<DR_COUNT; i++)); do all="$all $i"; done
+  if [ "${1:-}" = "--yes" ]; then
+    choices="${all# }"
+  else
+    local -a labels=()
+    for ((i=0; i<DR_COUNT; i++)); do
+      labels[$i]="$((i + 1))) $(dr__short_path "${DR_FILE[$i]}") — ${DR_DESC[$i]}"
+    done
+    ui_multiselect "고칠 항목 선택" labels "${all# }"
+    choices="$UI_CHOICES"
+  fi
+  if [ -z "$choices" ]; then
+    printf '취소됨\n'
+    return 0
+  fi
+  echo
+  dr_apply "$choices"
+  printf '\n%s새 셸을 열거나 `exec $SHELL -l` 로 적용하세요.%s\n' "$UI_DIM" "$UI_RESET"
+}
+
 # ---- submenus ----
 
 submenu_install() {
@@ -412,27 +449,64 @@ do_exit() {
   exit 0
 }
 
+usage() {
+  cat <<'USAGE'
+usage: onboard            인터랙티브 메뉴
+       onboard doctor     잘못된 셸 설정 점검 후 고를 항목 수정
+       onboard doctor --yes   발견된 항목 전부 수정
+       onboard doctor --check 점검만 (문제가 있으면 exit 1)
+USAGE
+}
+
 main() {
+  case "${1:-}" in
+    doctor)
+      case "${2:-}" in
+        --check)
+          dr_scan
+          if [ "$DR_COUNT" -eq 0 ]; then printf '%s✓%s ok\n' "$UI_GREEN" "$UI_RESET"; exit 0; fi
+          dr_report; exit 1 ;;
+        *) do_doctor "${2:-}"; exit 0 ;;
+      esac ;;
+    -h|--help|help) usage; exit 0 ;;
+    '') ;;
+    *) usage >&2; exit 2 ;;
+  esac
+
   local -a labels actions
-  labels=(
-    "install"
-    "config"
-    "ai-config"
-    "Exit"
-  )
+  local doctor_tag
   actions=(
     submenu_install
     submenu_config
     submenu_ai_config
+    __doctor
     do_exit
   )
   while true; do
+    dr_scan
+    if [ "$DR_COUNT" -gt 0 ]; then
+      doctor_tag=" ${UI_YELLOW}(${DR_COUNT} issues)${UI_RESET}"
+    else
+      doctor_tag=" ${UI_DIM}(ok)${UI_RESET}"
+    fi
+    labels=(
+      "install"
+      "config"
+      "ai-config"
+      "doctor — 잘못된 설정 점검/수정${doctor_tag}"
+      "Exit"
+    )
     printf '\033[H\033[2J'
     ui_menu "onboard" labels
     if [ "$UI_CHOICE" = "255" ]; then
       do_exit
     fi
     local fn="${actions[$UI_CHOICE]}"
+    if [ "$fn" = "__doctor" ]; then
+      do_doctor
+      pause
+      continue
+    fi
     "$fn"
   done
 }
