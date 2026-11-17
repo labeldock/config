@@ -48,20 +48,35 @@ ob_install_brew() {
   fi
 }
 
+# rc 에 넣을 mise activate 한 줄. 설치 경로(brew: /opt/homebrew/bin, mise.run: ~/.local/bin)를
+# 하드코딩하지 않고 셸 시작 시점에 찾는다 → 설치 방식이 바뀌어도 rc 가 깨지지 않는다.
+ob__mise_activation_line() {
+  local shell_name="$1" flag="$2"
+  printf 'if command -v mise >/dev/null 2>&1; then eval "$(mise activate %s)"; elif [ -x "$HOME/.local/bin/mise" ]; then eval "$("$HOME/.local/bin/mise" activate %s)"; fi %s\n' \
+    "$shell_name" "$shell_name" "$flag"
+}
+
 ob__ensure_mise_activation() {
-  local rc shell_name
+  local rc shell_name line tmp
   local flag='#~/config:mise:activate:flag'
   for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     [ -f "$rc" ] || continue
-    grep -qF "$flag" "$rc" && continue
     case "$rc" in
       *.bashrc) shell_name=bash ;;
       *.zshrc)  shell_name=zsh ;;
     esac
-    {
-      printf '\n'
-      printf 'eval "$(~/.local/bin/mise activate %s)" %s\n' "$shell_name" "$flag"
-    } >> "$rc"
+    line="$(ob__mise_activation_line "$shell_name" "$flag")"
+    if grep -qF "$flag" "$rc"; then
+      # 이전 버전이 넣은 `~/.local/bin/mise` 하드코딩 줄은 같은 자리에서 교체한다.
+      grep -F "$flag" "$rc" | grep -qF '~/.local/bin/mise activate' || continue
+      tmp="$(mktemp)" || continue
+      FLAG="$flag" LINE="$line" awk 'index($0, ENVIRON["FLAG"]) { print ENVIRON["LINE"]; next } { print }' "$rc" > "$tmp" \
+        && cat "$tmp" > "$rc"
+      rm -f "$tmp"
+      printf '%s~%s mise activation updated in %s\n' "$UI_CYAN" "$UI_RESET" "$rc"
+      continue
+    fi
+    printf '\n%s\n' "$line" >> "$rc"
     printf '%s+%s mise activation added to %s\n' "$UI_CYAN" "$UI_RESET" "$rc"
   done
 }
